@@ -1,0 +1,63 @@
+#include "rclcpp/rclcpp.hpp"
+#include "interfaces/msg/ultrasonic.hpp" // Updated include for your custom message
+
+class ObstacleDetection : public rclcpp::Node
+{
+public:
+    ObstacleDetection() : Node("obstacle_detection")
+    {
+        // Create a subscription to the "/us_data" topic
+        subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>("/us_data", 10, std::bind(&ObstacleDetection::topic_callback, this, std::placeholders::_1));
+    }
+
+private:
+    void topic_callback(const interfaces::msg::Ultrasonic::SharedPtr msg)
+    {
+        // Access the fields of the custom message
+        int16_t front_left = msg->front_left;
+        int16_t front_center = msg->front_center;
+        int16_t front_right = msg->front_right;
+        int16_t rear_left = msg->rear_left;
+        int16_t rear_center = msg->rear_center;
+        int16_t rear_right = msg->rear_right;
+
+        //
+        RCLCPP_INFO(this->get_logger(), "Received Ultrasonic Data");
+        //RCLCPP_INFO(this->get_logger(), "Front Left: %d, Front Center: %d, Front Right: %d", front_left, front_center, front_right);
+        //RCLCPP_INFO(this->get_logger(), "Rear Left: %d, Rear Center: %d, Rear Right: %d", rear_left, rear_center, rear_right);
+
+        // Comparison 
+        if ((front_left < 30) || (front_center < 30) || (front_right < 30) || (rear_left < 30) || (rear_center < 30) || (rear_right < 30))
+        {
+            RCLCPP_WARN(this->get_logger(), "STOP !!!");
+        }
+        else if ((front_left < 45) || (front_center < 45) || (front_right < 45) || (rear_left < 45) || (rear_center < 45) || (rear_right < 45))
+        {
+            RCLCPP_INFO(this->get_logger(), "SLOW DOWN AGAIN !!!");
+        }
+        else if ((front_left < 70) || (front_center < 70) || (front_right < 70) || (rear_left < 70) || (rear_center < 70) || (rear_right < 70))
+        {
+            RCLCPP_INFO(this->get_logger(), "SLOW DOWN BOY");
+        }
+        else if ((front_left > 100) && (front_center > 100) && (front_right > 100) && (rear_left > 100) && (rear_center > 100) && (rear_right > 100))
+        {
+            RCLCPP_INFO(this->get_logger(), "EVERYTHING IS GOOD");
+        }
+        // Add further comparisons as needed
+    }
+
+    rclcpp::Subscription<interfaces::msg::Ultrasonic>::SharedPtr subscription_;
+};
+
+int main(int argc, char *argv[])
+{
+    // Initialize the ROS 2 node
+    rclcpp::init(argc, argv);
+
+    // Create and run the node
+    rclcpp::spin(std::make_shared<ObstacleDetection>());
+
+    // Shutdown the ROS 2 system
+    rclcpp::shutdown();
+    return 0;
+}
