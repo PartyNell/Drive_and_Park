@@ -16,19 +16,20 @@ public:
 private:
 
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+    rclcpp::Publisher<interfaces::msg::SpeedInfo>::SharedPtr publisher_;
+    rclcpp::Subscription<interfaces::msg::Ultrasonic>::SharedPtr subscription_;
     size_t count_;
 
-    rclcpp::Subscription<interfaces::msg::Ultrasonic>::SharedPtr subscription_;
  
     bool will_send_speed_;
     float speed_value_;
 
-    enum Speed_coefficient = {
-        WALKING_PACE = 0.25,
-        HALF_SPEED = 0.5,
-        SLOWER = 0.75,
-        NORMAL = 1.0
+    class SpeedCoefficient {
+    public:
+        static constexpr float WALKING_PACE = 0.25;
+        static constexpr float HALF_SPEED = 0.5;
+        static constexpr float SLOWER = 0.75;
+        static constexpr float NORMAL = 1.0;
     };
 
 
@@ -38,7 +39,7 @@ private:
         {
             auto message = interfaces::msg::SpeedInfo();
             message.speed_coeff = speed_value_;
-            RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.speed_coeff.c_str());
+            RCLCPP_INFO(this->get_logger(), "Publishing: '%f'", message.speed_coeff);
             publisher_->publish(message);
             will_send_speed_ = false;
         }        
@@ -64,25 +65,25 @@ private:
         {
             RCLCPP_WARN(this->get_logger(), "STOP !!!");
             will_send_speed_ = true;
-            speed_value_ = Speed_coefficient.WALKING_PACE; 
+            speed_value_ = Speed_coefficient::WALKING_PACE; 
         }
         else if ((front_left < 45) || (front_center < 45) || (front_right < 45) || (rear_left < 45) || (rear_center < 45) || (rear_right < 45))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN AGAIN !!!");
             will_send_speed_ = true;
-            speed_value_ = Speed_coefficient.HALF_SPEED; 
+            speed_value_ = Speed_coefficient::HALF_SPEED; 
         }
         else if ((front_left < 70) || (front_center < 70) || (front_right < 70) || (rear_left < 70) || (rear_center < 70) || (rear_right < 70))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN BOY");
             will_send_speed_ = true;
-            speed_value_ = Speed_coefficient.SLOWER; 
+            speed_value_ = Speed_coefficient::SLOWER; 
         }
         else if ((front_left > 100) && (front_center > 100) && (front_right > 100) && (rear_left > 100) && (rear_center > 100) && (rear_right > 100))
         {
             RCLCPP_INFO(this->get_logger(), "EVERYTHING IS GOOD");
             will_send_speed_ = true;
-            speed_value_ = Speed_coefficient.NORMAL; 
+            speed_value_ = Speed_coefficient::NORMAL; 
         }
         // Add further comparisons as needed
     }
