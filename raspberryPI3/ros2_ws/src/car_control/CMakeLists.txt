@@ -21,6 +21,7 @@ add_executable(car_control_node
 
 
 ament_target_dependencies(car_control_node rclcpp interfaces sensor_msgs std_srvs)
+ament_target_dependencies(car_command_node rclcpp interfaces)
 ament_export_include_directories(include)
 
 target_include_directories(car_control_node PUBLIC
