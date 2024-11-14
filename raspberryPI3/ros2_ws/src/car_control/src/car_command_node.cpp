@@ -22,55 +22,29 @@ public:
     }
 
 private:
+    rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control;
+    rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick;
+    float speed_limit = 1.0;
+
     void carCommand_JoystickOrder(const interfaces::msg::JoystickOrder & joystickOrder)
     {
         //if there is no obstacle detected then the message send is the one sending by the joystick
-        if(!obstacle_detection)
-        {
-            //Joystick order is sent
-            publisher_car_control->publish(joystickOrder);
-        } 
-        else
-        {
-            //The previous order from obstacle_detection is sent
-            safety_order.start = joystickOrder.start;
-            safety_order.mode = joystickOrder.mode;
-            safety_order.steer = joystickOrder.steer;
-            safety_order.reverse = joystickOrder.reverse;
-
-            publisher_car_control->publish(safety_order);
+        interfaces::msg::JoystickOrder control_order = {
+            joystickOrder.start,
+            joystickOrder.mode,
+            joystickOrder.throttle*speed_limit,
+            joystickOrder.steer,
+            joystickOrder.reverse
         }
 
-
+            publisher_car_control->publish(control_order);
     }
 
     void carCommand_SafetyOrder(const interfaces::msg::JoystickOrder & safetyOrder)
     {
-        //set the detect obstacle variable depending on the data receved from the obstacle_detection
-        obstacle_detection = safetyOrder.throttle != -1;
-
         //set the safety_order variable depending on the data receved from the obstacle_detection
-        safety_order.throttle = safetyOrder.throttle;
-
-        //publish a carControlOrder if  there is an obstacle
-        if(obstacle_detection){
-            publisher_car_control->publish(safety_order);
-        }
+        speed_limit = safetyOrder.speed_limit;
     }
-
-    rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control;
-    bool obstacle_detection = false;
-    interfaces::msg::JoystickOrder safety_order = {
-        0, //start
-        0, //mode
-        0, //throttle
-        0, //steer
-        0  //reverse
-    }
-
-    //we should create 2 topics 1.(start and mode) and 2.(throttle, steer and reverse)
-    //1. Joystick send it message to car_control (we do not need to process those elements in car_command)
-    //2. Joystick send it message to car_command
 };
 
 int main(int argc, char * argv[])
