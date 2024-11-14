@@ -36,7 +36,6 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-
     config_dir = os.path.join(get_package_share_directory('imu_filter_madgwick'), 'config')
 
     imu_filter_madgwick_node = Node(
@@ -46,13 +45,17 @@ def generate_launch_description():
         emulate_tty=True
     )
 
-
     system_check_node = Node(
         package="system_check",
         executable="system_check_node",
         emulate_tty=True
     )
 
+    obstacle_detection_node = Node(
+        package="obstacle_detection",
+        executable="obstacle_detection",
+        emulate_tty=True
+    )
 
     ld.add_action(joystick_node)
     ld.add_action(joystick_to_cmd_node)
