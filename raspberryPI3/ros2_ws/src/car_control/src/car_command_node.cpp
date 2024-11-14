@@ -24,7 +24,7 @@ public:
 private:
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control;
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick;
-    float speed_limit = 1.0;
+    float speed_limit = 0.5;
 
     void carCommand_JoystickOrder(const interfaces::msg::JoystickOrder & joystickOrder)
     {
@@ -40,11 +40,11 @@ private:
             publisher_car_control->publish(control_order);
     }
 
-    void carCommand_SafetyOrder(const interfaces::msg::JoystickOrder & safetyOrder)
-    {
-        //set the safety_order variable depending on the data receved from the obstacle_detection
-        speed_limit = safetyOrder.speed_limit;
-    }
+    //void carCommand_SafetyOrder(const interfaces::msg::JoystickOrder & safetyOrder)
+    //{
+    //    //set the safety_order variable depending on the data receved from the obstacle_detection
+    //    speed_limit = safetyOrder.speed_coeff;
+    //}
 };
 
 int main(int argc, char * argv[])
