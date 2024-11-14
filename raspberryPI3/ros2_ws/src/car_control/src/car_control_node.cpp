@@ -137,7 +137,9 @@ private:
 
             //Autonomous Mode
             } else if (mode==1){
-                //...
+                manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
+
+                steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
             }
         }
 
