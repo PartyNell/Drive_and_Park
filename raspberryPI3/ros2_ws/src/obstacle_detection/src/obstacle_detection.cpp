@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "interfaces/msg/Speed_info.hpp"
+#include "interfaces/msg/SpeedInfo.hpp"
 
 class ObstacleDetection : public rclcpp::Node
 {
@@ -8,7 +8,7 @@ public:
     {
         // Create a subscription to the "/us_data" topic
         subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>("/us_data", 10, std::bind(&ObstacleDetection::topic_callback, this, std::placeholders::_1));
-        publisher_ = this->create_publisher<interfaces::msg::Speed_info>("Speed_info", 10);
+        publisher_ = this->create_publisher<interfaces::msg::SpeedInfo>("SpeedInfo", 10);
         timer_ = this->create_wall_timer(500ms, std::bind(&ObstacleDetection::timer_callback, this));
     }
 
@@ -35,7 +35,7 @@ private:
     {
         if (will_send_speed_)
         {
-            auto message = interfaces::msg::Speed_info();
+            auto message = interfaces::msg::SpeedInfo();
             message.speed_coeff = speed_value_;
             RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.speed_coeff.c_str());
             publisher_->publish(message);
