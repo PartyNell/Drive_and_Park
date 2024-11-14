@@ -18,7 +18,7 @@ public:
     {
         publisher_car_control= this->create_publisher<interfaces::msg::JoystickOrder>("car_command", 10);
 
-        subscription_joystick = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&car_command::carCommand, this, _1));
+        subscription_joystick = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&car_command::carCommand_JoystickOrder, this, _1));
     }
 
 private:
@@ -39,19 +39,30 @@ private:
 
     }
 
-    void carCommand()
+    void carCommand_SafetyOrder(const interfaces::msg::JoystickOrder & safetyOrder)
     {
         //set the detect obstacle variable depending on the data receved from the obstacle_detection
+        obstacle_detection = safetyOrder.throttle == -1;
+
+        //set the safety_order variable depending on the data receved from the obstacle_detection
+        safety_order.throttle = safetyOrder.throttle;
+        safety_order.steer = safetyOrder.steer;
+        safety_order.reverse = safetyOrder.reverse;
+
+        //publish a carControlOrder if  there is an obstacle
+        if(obstacle_detection){
+            publisher_car_control->publish(safety_order);
+        }
     }
 
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control;
     bool obstacle_detection = false;
     interfaces::msg::JoystickOrder safety_order = {
-        //start
-        //mode
-        //throttle
-        //steer
-        //reverse
+        0, //start
+        0, //mode
+        0, //throttle
+        0, //steer
+        0  //reverse
     }
 
     //we should create 2 topics 1.(start and mode) and 2.(throttle, steer and reverse)
