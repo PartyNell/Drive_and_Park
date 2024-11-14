@@ -13,6 +13,7 @@ find_package(interfaces REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+include_directories(include)
 
 add_executable(obstacle_detection src/obstacle_detection.cpp)
 ament_target_dependencies(obstacle_detection rclcpp interfaces)
