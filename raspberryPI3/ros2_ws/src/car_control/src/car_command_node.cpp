@@ -33,6 +33,11 @@ private:
         else
         {
             //The previous order from obstacle_detection is sent
+            safety_order.start = joystickOrder.start;
+            safety_order.mode = joystickOrder.mode;
+            safety_order.steer = joystickOrder.steer;
+            safety_order.reverse = joystickOrder.reverse;
+
             publisher_car_control->publish(safety_order);
         }
 
@@ -42,12 +47,10 @@ private:
     void carCommand_SafetyOrder(const interfaces::msg::JoystickOrder & safetyOrder)
     {
         //set the detect obstacle variable depending on the data receved from the obstacle_detection
-        obstacle_detection = safetyOrder.throttle == -1;
+        obstacle_detection = safetyOrder.throttle != -1;
 
         //set the safety_order variable depending on the data receved from the obstacle_detection
         safety_order.throttle = safetyOrder.throttle;
-        safety_order.steer = safetyOrder.steer;
-        safety_order.reverse = safetyOrder.reverse;
 
         //publish a carControlOrder if  there is an obstacle
         if(obstacle_detection){

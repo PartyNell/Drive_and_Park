@@ -59,7 +59,8 @@ public:
         buttonsMap.insert({"RS",10});  //Right Stick Button
 
 
-        publisher_joystick_order_= this->create_publisher<interfaces::msg::JoystickOrder>("joystick_order", 10);
+        publisher_joystick_order_car_control= this->create_publisher<interfaces::msg::JoystickOrder>("joystick_order", 10);
+        publisher_joystick_order_car_command= this->create_publisher<interfaces::msg::JoystickOrder>("joystick_order_autonomous", 10);
         publisher_system_check_= this->create_publisher<interfaces::msg::SystemCheck>("system_check", 10);
 
 
@@ -176,7 +177,15 @@ private:
         joystickOrderMsg.steer  = requestedAngle;
         joystickOrderMsg.reverse = reverse;
 
-        publisher_joystick_order_->publish(joystickOrderMsg); //Send order to the car_control_node
+        if(mode == 0 || mode == 2)
+        {
+            publisher_joystick_order_car_control->publish(joystickOrderMsg); //Send order to the car_control_node
+        }
+        else if(mode == 1)
+        {
+            publisher_joystick_order_car_command->publish(joystickOrderMsg); //Send order to the car_command_node
+        }
+        
     }
 
     //Joystick variables
