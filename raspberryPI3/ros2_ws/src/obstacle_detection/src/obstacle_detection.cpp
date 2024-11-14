@@ -65,25 +65,25 @@ private:
         {
             RCLCPP_WARN(this->get_logger(), "STOP !!!");
             will_send_speed_ = true;
-            speed_value_ = Speed_coefficient::WALKING_PACE; 
+            speed_value_ = SpeedCoefficient::WALKING_PACE; 
         }
         else if ((front_left < 45) || (front_center < 45) || (front_right < 45) || (rear_left < 45) || (rear_center < 45) || (rear_right < 45))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN AGAIN !!!");
             will_send_speed_ = true;
-            speed_value_ = Speed_coefficient::HALF_SPEED; 
+            speed_value_ = SpeedCoefficient::HALF_SPEED; 
         }
         else if ((front_left < 70) || (front_center < 70) || (front_right < 70) || (rear_left < 70) || (rear_center < 70) || (rear_right < 70))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN BOY");
             will_send_speed_ = true;
-            speed_value_ = Speed_coefficient::SLOWER; 
+            speed_value_ = SpeedCoefficient::SLOWER; 
         }
         else if ((front_left > 100) && (front_center > 100) && (front_right > 100) && (rear_left > 100) && (rear_center > 100) && (rear_right > 100))
         {
             RCLCPP_INFO(this->get_logger(), "EVERYTHING IS GOOD");
             will_send_speed_ = true;
-            speed_value_ = Speed_coefficient::NORMAL; 
+            speed_value_ = SpeedCoefficient::NORMAL; 
         }
         // Add further comparisons as needed
     }
