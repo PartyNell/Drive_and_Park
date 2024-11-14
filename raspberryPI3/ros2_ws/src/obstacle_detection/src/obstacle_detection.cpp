@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "interfaces/msg/ultrasonic.hpp" // Updated include for your custom message
+#include "interfaces/msg/speed_info.hpp"
 
 class ObstacleDetection : public rclcpp::Node
 {
@@ -8,11 +8,41 @@ public:
     {
         // Create a subscription to the "/us_data" topic
         subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>("/us_data", 10, std::bind(&ObstacleDetection::topic_callback, this, std::placeholders::_1));
-        publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
+        publisher_ = this->create_publisher<interfaces::msg::Speed_info>("speed_info", 10);
         timer_ = this->create_wall_timer(500ms, std::bind(&ObstacleDetection::timer_callback, this));
     }
 
 private:
+
+    rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+    size_t count_;
+
+    rclcpp::Subscription<interfaces::msg::Ultrasonic>::SharedPtr subscription_;
+ 
+    bool will_send_speed_;
+    float speed_value_;
+
+    enum Speed_coefficient = {
+        WALKING_PACE = 0.25,
+        HALF_SPEED = 0.5,
+        SLOWER = 0.75,
+        NORMAL = 1.0
+    };
+
+
+    void timer_callback()
+    {
+        if (will_send_speed_)
+        {
+            auto message = interfaces::msg::Speed_info();
+            message.speed_coeff = speed_value_;
+            RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.speed_coeff.c_str());
+            publisher_->publish(message);
+            will_send_speed_ = false;
+        }        
+    }
+
     void topic_callback(const interfaces::msg::Ultrasonic::SharedPtr msg)
     {
         // Access the fields of the custom message
@@ -32,36 +62,31 @@ private:
         if ((front_left < 30) || (front_center < 30) || (front_right < 30) || (rear_left < 30) || (rear_center < 30) || (rear_right < 30))
         {
             RCLCPP_WARN(this->get_logger(), "STOP !!!");
+            will_send_speed_ = true;
+            speed_value_ = Speed_coefficient.WALKING_PACE; 
         }
         else if ((front_left < 45) || (front_center < 45) || (front_right < 45) || (rear_left < 45) || (rear_center < 45) || (rear_right < 45))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN AGAIN !!!");
+            will_send_speed_ = true;
+            speed_value_ = Speed_coefficient.HALF_SPEED; 
         }
         else if ((front_left < 70) || (front_center < 70) || (front_right < 70) || (rear_left < 70) || (rear_center < 70) || (rear_right < 70))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN BOY");
+            will_send_speed_ = true;
+            speed_value_ = Speed_coefficient.SLOWER; 
         }
         else if ((front_left > 100) && (front_center > 100) && (front_right > 100) && (rear_left > 100) && (rear_center > 100) && (rear_right > 100))
         {
             RCLCPP_INFO(this->get_logger(), "EVERYTHING IS GOOD");
+            will_send_speed_ = true;
+            speed_value_ = Speed_coefficient.NORMAL; 
         }
         // Add further comparisons as needed
     }
 
-    void timer_callback()
-    {
-      auto message = std_msgs::msg::String();
-      message.data = "Hello, world! ";
-      RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
-      publisher_->publish(message);
-    }
 
-    rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
-    size_t count_;
-
-    rclcpp::Subscription<interfaces::msg::Ultrasonic>::SharedPtr subscription_;
- 
 };
 
 int main(int argc, char *argv[])

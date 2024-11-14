@@ -1,0 +1,1 @@
+float32 speed_coeff 0  #[0 ; 1]
