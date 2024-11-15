@@ -184,6 +184,7 @@ private:
         else if(mode == 1)
         {
             publisher_joystick_order_car_command->publish(joystickOrderMsg); //Send order to the car_command_node
+            RCLCPP_INFO(this->get_logger(), "Message to car_command published");
         }
         
     }
@@ -207,7 +208,8 @@ private:
 
 
 
-    rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_joystick_order_;
+    rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_joystick_order_car_control;
+    rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_joystick_order_car_command;
     rclcpp::Publisher<interfaces::msg::SystemCheck>::SharedPtr publisher_system_check_;
 
     rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr subscription_joy_;
