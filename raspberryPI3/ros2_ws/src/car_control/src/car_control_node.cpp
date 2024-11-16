@@ -125,18 +125,25 @@ private:
 
         }else{ //Car started
 
-            //Manual Mode
-            if (mode==0){
+            // //Manual Mode
+            // if (mode==0){
                 
+            //     manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
+
+            //     steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
+
+
+            // //Autonomous Mode
+            // } else if (mode==1){
+            //     manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
+
+            //     steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
+            // }
+
+            RCLCPP_INFO(this->get_logger(), "Mode : %d", mode);
+
+            if(mode==0 || mode==1){
                 manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
-
-                steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
-
-
-            //Autonomous Mode
-            } else if (mode==1){
-                manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
-
                 steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
             }
         }
@@ -146,6 +153,10 @@ private:
         motorsOrder.left_rear_pwm = leftRearPwmCmd;
         motorsOrder.right_rear_pwm = rightRearPwmCmd;
         motorsOrder.steering_pwm = steeringPwmCmd;
+
+        RCLCPP_INFO(this->get_logger(), "Left Rear Pwm Cmd : %d", motorsOrder.left_rear_pwm);
+        RCLCPP_INFO(this->get_logger(), "Right Rear Pwm Cmd : %d", motorsOrder.right_rear_pwm);
+        RCLCPP_INFO(this->get_logger(), "Steering Pwm : %d", motorsOrder.steering_pwm);
 
         publisher_can_->publish(motorsOrder);
     }

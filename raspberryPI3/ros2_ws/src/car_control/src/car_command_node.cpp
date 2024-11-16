@@ -24,32 +24,25 @@ public:
     }
 
 private:
-    //rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control_;
+    rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control_;
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_;
     float speed_limit = 0.5;
 
     void carCommand_JoystickOrder(const interfaces::msg::JoystickOrder & joystickOrder)
     {
+        //if there is no obstacle detected then the message send is the one sending by the joystick
+        auto control_order = interfaces::msg::JoystickOrder();
+        control_order.start = joystickOrder.start;
+        control_order.mode = joystickOrder.mode;
+        control_order.throttle = joystickOrder.throttle*speed_limit;
+        control_order.steer = joystickOrder.steer;
+        control_order.reverse = joystickOrder.reverse;
+
         RCLCPP_INFO(this->get_logger(), "Mode : %d", joystickOrder.mode);
-        RCLCPP_INFO(this->get_logger(), "Throttle : %f", joystickOrder.throttle);
+        RCLCPP_INFO(this->get_logger(), "Throttle : %f", control_order.throttle);
         RCLCPP_INFO(this->get_logger(), "Steer : %f", joystickOrder.steer);
 
-        publisher_car_control_->publish(joystickOrder);
-
-
-        // RCLCPP_INFO(this->get_logger(), "Speed before command : %f", control_order.throttle);
-
-        // //if there is no obstacle detected then the message send is the one sending by the joystick
-        // auto control_order = interfaces::msg::JoystickOrder();
-        // control_order.start = joystickOrder.start;
-        // control_order.mode = joystickOrder.mode;
-        // control_order.throttle = joystickOrder.throttle*speed_limit;
-        // control_order.steer = joystickOrder.steer;
-        // control_order.reverse = joystickOrder.reverse;
-
-        // RCLCPP_INFO(this->get_logger(), "Speed after command : %f", control_order.throttle);
-
-        // publisher_car_control->publish(control_order);
+        publisher_car_control->publish(control_order);
     }
 
     //void carCommand_SafetyOrder(const interfaces::msg::JoystickOrder & safetyOrder)
