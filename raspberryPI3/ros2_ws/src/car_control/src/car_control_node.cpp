@@ -154,10 +154,6 @@ private:
         motorsOrder.right_rear_pwm = rightRearPwmCmd;
         motorsOrder.steering_pwm = steeringPwmCmd;
 
-        RCLCPP_INFO(this->get_logger(), "Left Rear Pwm Cmd : %d", motorsOrder.left_rear_pwm);
-        RCLCPP_INFO(this->get_logger(), "Right Rear Pwm Cmd : %d", motorsOrder.right_rear_pwm);
-        RCLCPP_INFO(this->get_logger(), "Steering Pwm : %d", motorsOrder.steering_pwm);
-
         publisher_can_->publish(motorsOrder);
     }
 
