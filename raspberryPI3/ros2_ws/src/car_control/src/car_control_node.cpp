@@ -34,10 +34,8 @@ public:
 
         publisher_steeringCalibration_ = this->create_publisher<interfaces::msg::SteeringCalibration>("steering_calibration", 10);
 
-        
-
-        subscription_joystick_order_ = this->create_subscription<interfaces::msg::JoystickOrder>(
-        "joystick_order", 10, std::bind(&car_control::joystickOrderCallback, this, _1));
+        subscription_command_car_ = this->create_subscription<interfaces::msg::JoystickOrder>(
+        "car_command", 10, std::bind(&car_control::joystickOrderCallback, this, _1));
 
         subscription_motors_feedback_ = this->create_subscription<interfaces::msg::MotorsFeedback>(
         "motors_feedback", 10, std::bind(&car_control::motorsFeedbackCallback, this, _1));
@@ -233,7 +231,7 @@ private:
     rclcpp::Publisher<interfaces::msg::SteeringCalibration>::SharedPtr publisher_steeringCalibration_;
 
     //Subscribers
-    rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_order_;
+    rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_command_car_;
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     rclcpp::Subscription<interfaces::msg::SteeringCalibration>::SharedPtr subscription_steering_calibration_;
 
