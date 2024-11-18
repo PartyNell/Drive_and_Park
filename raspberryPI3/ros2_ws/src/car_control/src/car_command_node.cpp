@@ -31,15 +31,20 @@ private:
     rclcpp::Subscription<interfaces::msg::SpeedInfo>::SharedPtr subscription_safety_;
     float speed_limit = 1.0;
 
+    interfaces::msg::JoystickOrder joystick_order_saved = interfaces::msg::JoystickOrder();
+
     void carCommand_JoystickOrder(const interfaces::msg::JoystickOrder & joystickOrder)
     {
         //if there is no obstacle detected then the message send is the one sending by the joystick
+        joystick_order_saved.start = joystickOrder.start;
+        joystick_order_saved.mode = joystickOrder.mode;
+        joystick_order_saved.throttle = joystickOrder.throttle;
+        joystick_order_saved.steer = joystickOrder.steer;
+        joystick_order_saved.reverse = joystickOrder.reverse;
+
         auto control_order = interfaces::msg::JoystickOrder();
-        control_order.start = joystickOrder.start;
-        control_order.mode = joystickOrder.mode;
-        control_order.throttle = joystickOrder.throttle*speed_limit;
-        control_order.steer = joystickOrder.steer;
-        control_order.reverse = joystickOrder.reverse;
+        control_order = joystick_order_saved;
+        control_order.throttle *= speed_limit;
 
         RCLCPP_INFO(this->get_logger(), "Speed coeff : %f", speed_limit);
         RCLCPP_INFO(this->get_logger(), "Mode : %d", joystickOrder.mode);
@@ -53,6 +58,8 @@ private:
     {
        //set the safety_order variable depending on the data receved from the obstacle_detection
        speed_limit = safetyOrder.speed_coeff;
+
+       carCommand_JoystickOrder(joystick_order_saved);
     }
 };
 

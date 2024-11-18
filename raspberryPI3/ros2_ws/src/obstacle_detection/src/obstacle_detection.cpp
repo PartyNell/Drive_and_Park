@@ -5,7 +5,7 @@
 
 #define THRESHOLD_STOP 30
 #define THRESHOLD_SLOW 45
-#define THRESHOLD_FIRST_SLOW 75
+#define THRESHOLD_FIRST_SLOW 70
 #define THRESHOLD_CAREFUL 100
 
 using namespace std::chrono_literals;
@@ -18,7 +18,7 @@ public:
         // Create a subscription to the "/us_data" topic
         subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>("/us_data", 10, std::bind(&ObstacleDetection::topic_callback, this, std::placeholders::_1));
         publisher_ = this->create_publisher<interfaces::msg::SpeedInfo>("/speed_info", 10);
-        timer_ = this->create_wall_timer(500ms, std::bind(&ObstacleDetection::timer_callback, this));
+        timer_ = this->create_wall_timer(50ms, std::bind(&ObstacleDetection::timer_callback, this));
     }
 
 private:
@@ -33,9 +33,9 @@ private:
 
     class SpeedCoefficient {
     public:
+        static constexpr float STOP = 0.0;
         static constexpr float WALKING_PACE = 0.25;
         static constexpr float HALF_SPEED = 0.5;
-        static constexpr float SLOWER = 0.75;
         static constexpr float NORMAL = 1.0;
     };
 
@@ -71,19 +71,19 @@ private:
         {
             RCLCPP_WARN(this->get_logger(), "STOP !!!");
             will_send_speed_ = true;
-            speed_value_ = SpeedCoefficient::WALKING_PACE; 
+            speed_value_ = SpeedCoefficient::STOP; 
         }
         else if ((front_left < THRESHOLD_SLOW) || (front_center < THRESHOLD_SLOW) || (front_right < THRESHOLD_SLOW) || (rear_left < THRESHOLD_SLOW) || (rear_center < THRESHOLD_SLOW) || (rear_right < THRESHOLD_SLOW))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN AGAIN !!!");
             will_send_speed_ = true;
-            speed_value_ = SpeedCoefficient::HALF_SPEED; 
+            speed_value_ = SpeedCoefficient::WALKING_PACE; 
         }
         else if ((front_left < THRESHOLD_FIRST_SLOW) || (front_center < THRESHOLD_FIRST_SLOW) || (front_right < THRESHOLD_FIRST_SLOW) || (rear_left < THRESHOLD_FIRST_SLOW) || (rear_center < THRESHOLD_FIRST_SLOW) || (rear_right < THRESHOLD_FIRST_SLOW))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN BOY !!!");
             will_send_speed_ = true;
-            speed_value_ = SpeedCoefficient::SLOWER; 
+            speed_value_ = SpeedCoefficient::HALF_SPEED; 
         }
         else if ((front_left < THRESHOLD_CAREFUL) || (front_center < THRESHOLD_CAREFUL) || (front_right < THRESHOLD_CAREFUL) || (rear_left < THRESHOLD_CAREFUL) || (rear_center < THRESHOLD_CAREFUL) || (rear_right < THRESHOLD_CAREFUL))
         {
