@@ -79,7 +79,7 @@ private:
             will_send_speed_ = true;
             speed_value_ = SpeedCoefficient::HALF_SPEED; 
         }
-        else if ((front_left < 70) || (front_center < 70) || (front_right < 70) || (rear_left < 70) || (rear_center < 70) || (rear_right < 70))
+        else if ((front_left < THRESHOLD_FIRST_SLOW) || (front_center < THRESHOLD_FIRST_SLOW) || (front_right < THRESHOLD_FIRST_SLOW) || (rear_left < THRESHOLD_FIRST_SLOW) || (rear_center < THRESHOLD_FIRST_SLOW) || (rear_right < THRESHOLD_FIRST_SLOW))
         {
             RCLCPP_INFO(this->get_logger(), "SLOW DOWN BOY !!!");
             will_send_speed_ = true;
