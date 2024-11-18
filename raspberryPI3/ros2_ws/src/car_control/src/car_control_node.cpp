@@ -34,7 +34,9 @@ public:
 
         publisher_steeringCalibration_ = this->create_publisher<interfaces::msg::SteeringCalibration>("steering_calibration", 10);
 
-        subscription_command_car_ = this->create_subscription<interfaces::msg::JoystickOrder>(
+        
+
+        subscription_joystick_order_ = this->create_subscription<interfaces::msg::JoystickOrder>(
         "car_command", 10, std::bind(&car_control::joystickOrderCallback, this, _1));
 
         subscription_motors_feedback_ = this->create_subscription<interfaces::msg::MotorsFeedback>(
@@ -125,25 +127,19 @@ private:
 
         }else{ //Car started
 
-            // //Manual Mode
-            // if (mode==0){
+            //Manual Mode
+            if (mode==0){
                 
-            //     manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
-
-            //     steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
-
-
-            // //Autonomous Mode
-            // } else if (mode==1){
-            //     manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
-
-            //     steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
-            // }
-
-            RCLCPP_INFO(this->get_logger(), "Mode : %d", mode);
-
-            if(mode==0 || mode==1){
                 manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
+
+                steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
+
+
+            //Autonomous Mode
+            } else if (mode==1){
+
+                manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
+
                 steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
             }
         }
@@ -238,7 +234,7 @@ private:
     rclcpp::Publisher<interfaces::msg::SteeringCalibration>::SharedPtr publisher_steeringCalibration_;
 
     //Subscribers
-    rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_command_car_;
+    rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_order_;
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     rclcpp::Subscription<interfaces::msg::SteeringCalibration>::SharedPtr subscription_steering_calibration_;
 
