@@ -6,6 +6,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "interfaces/msg/joystick_order.hpp"
+#include "interfaces/msg/speed_info.hpp"
 
 using namespace std;
 using placeholders::_1;
@@ -19,6 +20,7 @@ public:
         publisher_car_control_= this->create_publisher<interfaces::msg::JoystickOrder>("car_command", 10);
 
         subscription_joystick_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&car_command::carCommand_JoystickOrder, this, _1));
+        subscription_safety_ = this->create_subscription<interfaces::msg::SpeedInfo>("speed_info", 10, std::bind(&car_command::carCommand_SafetyOrder, this, _1));
 
         RCLCPP_INFO(this->get_logger(), "car_command_node READY");
     }
@@ -26,7 +28,8 @@ public:
 private:
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control_;
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_;
-    float speed_limit = 0.5;
+    rclcpp::Subscription<interfaces::msg::SpeedInfo>::SharedPtr subscription_safety_;
+    float speed_limit = 1.0;
 
     void carCommand_JoystickOrder(const interfaces::msg::JoystickOrder & joystickOrder)
     {
@@ -38,6 +41,7 @@ private:
         control_order.steer = joystickOrder.steer;
         control_order.reverse = joystickOrder.reverse;
 
+        RCLCPP_INFO(this->get_logger(), "Speed coeff : %f", speed_limit);
         RCLCPP_INFO(this->get_logger(), "Mode : %d", joystickOrder.mode);
         RCLCPP_INFO(this->get_logger(), "Throttle : %f", control_order.throttle);
         RCLCPP_INFO(this->get_logger(), "Steer : %f", joystickOrder.steer);
@@ -45,11 +49,11 @@ private:
         publisher_car_control_->publish(control_order);
     }
 
-    //void carCommand_SafetyOrder(const interfaces::msg::JoystickOrder & safetyOrder)
-    //{
-    //    //set the safety_order variable depending on the data receved from the obstacle_detection
-    //    speed_limit = safetyOrder.speed_coeff;
-    //}
+    void carCommand_SafetyOrder(const interfaces::msg::SpeedInfo & safetyOrder)
+    {
+       //set the safety_order variable depending on the data receved from the obstacle_detection
+       speed_limit = safetyOrder.speed_coeff;
+    }
 };
 
 int main(int argc, char * argv[])
