@@ -12,6 +12,10 @@ find_package(interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 
+include_directories(include)
+
+add_executable(car_command_node src/car_command_node.cpp)
+
 add_executable(car_control_node 
   src/car_control_node.cpp
   src/steeringCmd.cpp
@@ -20,7 +24,8 @@ add_executable(car_control_node
 
 
 ament_target_dependencies(car_control_node rclcpp interfaces sensor_msgs std_srvs)
-ament_export_include_directories(include)
+ament_target_dependencies(car_command_node rclcpp interfaces)
+#ament_export_include_directories(include)
 
 target_include_directories(car_control_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -28,8 +33,9 @@ target_include_directories(car_control_node PUBLIC
 target_compile_features(car_control_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
 
-install(TARGETS car_control_node
+install(TARGETS car_control_node car_command_node
   DESTINATION lib/${PROJECT_NAME})
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

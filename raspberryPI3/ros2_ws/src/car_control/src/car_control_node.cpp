@@ -37,7 +37,7 @@ public:
         
 
         subscription_joystick_order_ = this->create_subscription<interfaces::msg::JoystickOrder>(
-        "joystick_order", 10, std::bind(&car_control::joystickOrderCallback, this, _1));
+        "car_command", 10, std::bind(&car_control::joystickOrderCallback, this, _1));
 
         subscription_motors_feedback_ = this->create_subscription<interfaces::msg::MotorsFeedback>(
         "motors_feedback", 10, std::bind(&car_control::motorsFeedbackCallback, this, _1));
@@ -137,7 +137,10 @@ private:
 
             //Autonomous Mode
             } else if (mode==1){
-                //...
+
+                manualPropulsionCmd(requestedThrottle, reverse, leftRearPwmCmd,rightRearPwmCmd);
+
+                steeringCmd(requestedSteerAngle,currentAngle, steeringPwmCmd);
             }
         }
 
