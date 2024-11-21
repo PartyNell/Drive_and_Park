@@ -21,6 +21,7 @@ public:
 
         subscription_joystick_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&car_command::carCommand_JoystickOrder, this, _1));
         subscription_safety_ = this->create_subscription<interfaces::msg::SpeedInfo>("speed_info", 10, std::bind(&car_command::carCommand_SafetyOrder, this, _1));
+        subscription_navigation_ = this->create_subscription<interfaces::msg::JoystickOrder>("autonomous_car_order", 10, std::bind(&car_command::carCommand_AutonomousOrder, this, _1));
 
         RCLCPP_INFO(this->get_logger(), "car_command_node READY");
     }
@@ -29,20 +30,51 @@ private:
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control_;
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_;
     rclcpp::Subscription<interfaces::msg::SpeedInfo>::SharedPtr subscription_safety_;
+    rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_navigation_;
     float speed_limit_front = 1.0;
 	float speed_limit_back = 1.0;
 
-    interfaces::msg::JoystickOrder joystick_order_saved = interfaces::msg::JoystickOrder();
+    interfaces::msg::JoystickOrder order_saved = interfaces::msg::JoystickOrder();
 
     void carCommand_JoystickOrder(const interfaces::msg::JoystickOrder & joystickOrder)
     {
-        //if there is no obstacle detected then the message send is the one sending by the joystick
-        joystick_order_saved.start = joystickOrder.start;
-        joystick_order_saved.mode = joystickOrder.mode;
-        joystick_order_saved.throttle = joystickOrder.throttle;
-        joystick_order_saved.steer = joystickOrder.steer;
-        joystick_order_saved.reverse = joystickOrder.reverse;
+        //Update START and MODE
+        order_saved.start = joystick_order.start;
+        order_saved.mode = joystick_order.mode;
 
+        //Publish joystick order if the mode is 0 or 2
+        if(order_saved.mode == 0 || order_saved.mode == 2)
+        {
+            publishOrder(JoystickOrder.throttle, JoystickOrder.steer, JoystickOrder.reverse);
+        }
+    }
+
+    void carCommand_AutonomousOrder(const interfaces::msg::JoystickOrder & autonomousOrder)
+    {
+        //Publish autonomous order if the mode is 1
+        if(order_saved.mode == 1)
+        {
+            publishOrder(autonomousOrder.throttle, autonomousOrder.steer, autonomousOrder.reverse);
+        }
+    }
+
+    void carCommand_SafetyOrder(const interfaces::msg::SpeedInfo & safetyOrder)
+    {
+      	//set the safety_order variable depending on the data receved from the obstacle_detection
+       	speed_limit_front = safetyOrder.speed_coeff_front;
+		speed_limit_back = safetyOrder.speed_coeff_back;
+
+      	carCommand_JoystickOrder(joystick_order_saved);
+    }
+
+    void publishOrder(float throttle, float steer, bool reverse)
+    {
+        //Save data without modification from detect obstacle
+        order_saved.throttle = throttle;
+        order_saved.steer = steer;
+        order_saved.reverse = reverse;
+
+        //Apply speed coefficient from detect_obstacle
         auto control_order = interfaces::msg::JoystickOrder();
         control_order = joystick_order_saved;
 		if (control_order.reverse) {
@@ -59,15 +91,6 @@ private:
         RCLCPP_INFO(this->get_logger(), "Steer : %f", joystickOrder.steer);
 
         publisher_car_control_->publish(control_order);
-    }
-
-    void carCommand_SafetyOrder(const interfaces::msg::SpeedInfo & safetyOrder)
-    {
-      	//set the safety_order variable depending on the data receved from the obstacle_detection
-       	speed_limit_front = safetyOrder.speed_coeff_front;
-		speed_limit_back = safetyOrder.speed_coeff_back;
-
-      	carCommand_JoystickOrder(joystick_order_saved);
     }
 };
 
