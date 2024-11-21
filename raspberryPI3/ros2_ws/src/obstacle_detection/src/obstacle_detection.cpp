@@ -10,6 +10,8 @@ ObstacleDetection::ObstacleDetection()
     publisher_ = this->create_publisher<interfaces::msg::SpeedInfo>("/speed_info", 10);
     
     timer_ = this->create_wall_timer(50ms, std::bind(&ObstacleDetection::timer_callback, this));
+
+    RCLCPP_INFO(this->get_logger(), "obstacle_detection node READY");
 }
 
 void ObstacleDetection::timer_callback()
@@ -68,6 +70,8 @@ void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
     else
     {
         // No warning or message; speed stays NORMAL.
+        RCLCPP_INFO(this->get_logger(), "'%s' OK, EVERYTHING GOOD !!!", orientation.c_str());
+        will_send_speed_ = true;
         if (is_front)
             speed_value_front = SpeedCoefficient::NORMAL; 
         else
