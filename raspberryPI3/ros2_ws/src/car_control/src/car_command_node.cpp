@@ -29,7 +29,8 @@ private:
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control_;
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_;
     rclcpp::Subscription<interfaces::msg::SpeedInfo>::SharedPtr subscription_safety_;
-    float speed_limit = 1.0;
+    float speed_limit_front = 1.0;
+	float speed_limit_back = 1.0;
 
     interfaces::msg::JoystickOrder joystick_order_saved = interfaces::msg::JoystickOrder();
 
@@ -44,9 +45,15 @@ private:
 
         auto control_order = interfaces::msg::JoystickOrder();
         control_order = joystick_order_saved;
-        control_order.throttle *= speed_limit;
+		if (control_order.reverse) {
+			control_order.throttle *= speed_limit_back;
+			RCLCPP_INFO(this->get_logger(), "Backward -> Speed coeff: %f", speed_limit_back);
+		}
+		else {
+			control_order.throttle *= speed_limit_front;
+			RCLCPP_INFO(this->get_logger(), "Forward -> Speed coeff: %f", speed_limit_front);
+		}
 
-        RCLCPP_INFO(this->get_logger(), "Speed coeff : %f", speed_limit);
         RCLCPP_INFO(this->get_logger(), "Mode : %d", joystickOrder.mode);
         RCLCPP_INFO(this->get_logger(), "Throttle : %f", control_order.throttle);
         RCLCPP_INFO(this->get_logger(), "Steer : %f", joystickOrder.steer);
@@ -56,10 +63,11 @@ private:
 
     void carCommand_SafetyOrder(const interfaces::msg::SpeedInfo & safetyOrder)
     {
-       //set the safety_order variable depending on the data receved from the obstacle_detection
-       speed_limit = safetyOrder.speed_coeff;
+      	//set the safety_order variable depending on the data receved from the obstacle_detection
+       	speed_limit_front = safetyOrder.speed_coeff_front;
+		speed_limit_back = safetyOrder.speed_coeff_back;
 
-       carCommand_JoystickOrder(joystick_order_saved);
+      	carCommand_JoystickOrder(joystick_order_saved);
     }
 };
 
