@@ -90,7 +90,7 @@ private:
             }
         }
         
-        if (mode == 0 || mode == 1 && start){  //if manual mode or autonomous mode -> update requestedThrottle, requestedSteerAngle and reverse from joystick order
+        if ((mode == 0 || mode == 1) && start){  //if manual mode or autonomous mode -> update requestedThrottle, requestedSteerAngle and reverse from joystick order
             requestedThrottle = joyOrder.throttle;
             requestedSteerAngle = joyOrder.steer;
             reverse = joyOrder.reverse;
