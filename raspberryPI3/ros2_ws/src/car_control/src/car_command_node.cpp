@@ -76,7 +76,7 @@ private:
 
         //Apply speed coefficient from detect_obstacle
         auto control_order = interfaces::msg::JoystickOrder();
-        control_order = joystick_order_saved;
+        control_order = order_saved;
 		if (control_order.reverse) {
 			control_order.throttle *= speed_limit_back;
 			RCLCPP_INFO(this->get_logger(), "Backward -> Speed coeff: %f", speed_limit_back);
