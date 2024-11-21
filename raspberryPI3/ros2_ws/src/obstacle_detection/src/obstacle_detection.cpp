@@ -17,9 +17,9 @@ void ObstacleDetection::timer_callback()
     if (will_send_speed_)
     {
         auto message = interfaces::msg::SpeedInfo();
-        message.speed_value_front = speed_value_front;
-        message.speed_value_back = speed_value_back;
-        RCLCPP_INFO(this->get_logger(), "Publishing: [back] '%f' - [front] '%f'", message.speed_value_back, message.speed_value_front);
+        message.speed_coeff_front = speed_value_front;
+        message.speed_coeff_back = speed_value_back;
+        RCLCPP_INFO(this->get_logger(), "Publishing: [back] '%f' - [front] '%f'", message.speed_coeff_back, message.speed_coeff_front);
         publisher_->publish(message);
         will_send_speed_ = false;
     }
