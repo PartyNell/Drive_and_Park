@@ -15,6 +15,7 @@ find_package(std_srvs REQUIRED)
 include_directories(include)
 
 add_executable(car_command_node src/car_command_node.cpp)
+add_executable(car_navigation src/navigation.cpp)
 
 add_executable(car_control_node 
   src/car_control_node.cpp

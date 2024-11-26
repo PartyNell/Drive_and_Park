@@ -30,7 +30,7 @@ private:
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control_;
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_;
     rclcpp::Subscription<interfaces::msg::SpeedInfo>::SharedPtr subscription_safety_;
-    rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_navigation_;
+
     float speed_limit_front = 1.0;
 	float speed_limit_back = 1.0;
 
@@ -77,6 +77,7 @@ private:
         //Apply speed coefficient from detect_obstacle
         auto control_order = interfaces::msg::JoystickOrder();
         control_order = order_saved;
+
 		if (control_order.reverse) {
 			control_order.throttle *= speed_limit_back;
 			RCLCPP_INFO(this->get_logger(), "Backward -> Speed coeff: %f", speed_limit_back);
