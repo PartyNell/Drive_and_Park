@@ -61,39 +61,39 @@ private:
         int16_t rear_center = msg->rear_center;
         int16_t rear_right = msg->rear_right;
 
-        //
-        //RCLCPP_INFO(this->get_logger(), "Received Ultrasonic Data");
-        //RCLCPP_INFO(this->get_logger(), "Front Left: %d, Front Center: %d, Front Right: %d", front_left, front_center, front_right);
-        //RCLCPP_INFO(this->get_logger(), "Rear Left: %d, Rear Center: %d, Rear Right: %d", rear_left, rear_center, rear_right);
 
         // Comparison 
         if ((front_left < THRESHOLD_STOP) || (front_center < THRESHOLD_STOP) || (front_right < THRESHOLD_STOP) || (rear_left < THRESHOLD_STOP) || (rear_center < THRESHOLD_STOP) || (rear_right < THRESHOLD_STOP))
         {
-            RCLCPP_WARN(this->get_logger(), "STOP !!!");
+            if (speed_value_ != SpeedCoefficient::WALKING_PACE)
+                RCLCPP_WARN(this->get_logger(), "STOP !!!");
             will_send_speed_ = true;
             speed_value_ = SpeedCoefficient::WALKING_PACE; 
         }
         else if ((front_left < THRESHOLD_SLOW) || (front_center < THRESHOLD_SLOW) || (front_right < THRESHOLD_SLOW) || (rear_left < THRESHOLD_SLOW) || (rear_center < THRESHOLD_SLOW) || (rear_right < THRESHOLD_SLOW))
         {
-            RCLCPP_INFO(this->get_logger(), "SLOW DOWN AGAIN !!!");
+            if (speed_value_ != SpeedCoefficient::HALF_SPEED)
+                RCLCPP_INFO(this->get_logger(), "SLOW DOWN AGAIN !!!");
             will_send_speed_ = true;
             speed_value_ = SpeedCoefficient::HALF_SPEED; 
         }
         else if ((front_left < THRESHOLD_FIRST_SLOW) || (front_center < THRESHOLD_FIRST_SLOW) || (front_right < THRESHOLD_FIRST_SLOW) || (rear_left < THRESHOLD_FIRST_SLOW) || (rear_center < THRESHOLD_FIRST_SLOW) || (rear_right < THRESHOLD_FIRST_SLOW))
         {
-            RCLCPP_INFO(this->get_logger(), "SLOW DOWN BOY !!!");
+            if (speed_value_ != SpeedCoefficient::SLOWER)
+                RCLCPP_INFO(this->get_logger(), "SLOW DOWN BOY !!!");
+
             will_send_speed_ = true;
             speed_value_ = SpeedCoefficient::SLOWER; 
         }
         else if ((front_left < THRESHOLD_CAREFUL) || (front_center < THRESHOLD_CAREFUL) || (front_right < THRESHOLD_CAREFUL) || (rear_left < THRESHOLD_CAREFUL) || (rear_center < THRESHOLD_CAREFUL) || (rear_right < THRESHOLD_CAREFUL))
         {
-            RCLCPP_INFO(this->get_logger(), "SOMETHING DETECTED, CAREFULL !!!");
+            if (speed_value_ != SpeedCoefficient::NORMAL)
+                RCLCPP_INFO(this->get_logger(), "SOMETHING DETECTED, CAREFULL !!!");
             will_send_speed_ = true;
             speed_value_ = SpeedCoefficient::NORMAL; 
         }
         else if ((front_left > THRESHOLD_CAREFUL) && (front_center > THRESHOLD_CAREFUL) && (front_right > THRESHOLD_CAREFUL) && (rear_left > THRESHOLD_CAREFUL) && (rear_center > THRESHOLD_CAREFUL) && (rear_right > THRESHOLD_CAREFUL))
         {
-            RCLCPP_INFO(this->get_logger(), "CHILL BRO EVERYTHING IS GOOD. NO GRANNY's OTW!!!");
             will_send_speed_ = false;
             speed_value_ = SpeedCoefficient::NORMAL; 
         }
