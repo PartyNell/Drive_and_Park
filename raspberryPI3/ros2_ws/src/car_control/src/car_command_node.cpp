@@ -37,7 +37,7 @@ private:
 
     interfaces::msg::JoystickOrder order_saved = interfaces::msg::JoystickOrder();
 
-    void carCommand_JoystickOrder(const interfaces::msg::JoystickOrder & joystickOrder)
+    void carCommand_JoystickOrder(const interfaces::msg::JoystickOrder & joystick_order)
     {
         //Update START and MODE
         order_saved.start = joystick_order.start;
@@ -46,7 +46,7 @@ private:
         //Publish joystick order if the mode is 0 or 2
         if(order_saved.mode == 0 || order_saved.mode == 2)
         {
-            publishOrder(JoystickOrder.throttle, JoystickOrder.steer, JoystickOrder.reverse);
+            publishOrder(joystick_order.throttle, joystick_order.steer, joystick_order.reverse);
         }
     }
 
@@ -65,7 +65,7 @@ private:
        	speed_limit_front = safetyOrder.speed_coeff_front;
 		speed_limit_back = safetyOrder.speed_coeff_back;
 
-      	carCommand_JoystickOrder(joystick_order_saved);
+      	carCommand_JoystickOrder(order_saved);
     }
 
     void publishOrder(float throttle, float steer, bool reverse)
@@ -88,9 +88,9 @@ private:
 			RCLCPP_INFO(this->get_logger(), "Forward -> Speed coeff: %f", speed_limit_front);
 		}
 
-        RCLCPP_INFO(this->get_logger(), "Mode : %d", joystickOrder.mode);
+        RCLCPP_INFO(this->get_logger(), "Mode : %d", control_order.mode);
         RCLCPP_INFO(this->get_logger(), "Throttle : %f", control_order.throttle);
-        RCLCPP_INFO(this->get_logger(), "Steer : %f", joystickOrder.steer);
+        RCLCPP_INFO(this->get_logger(), "Steer : %f", control_order.steer);
 
         publisher_car_control_->publish(control_order);
     }
