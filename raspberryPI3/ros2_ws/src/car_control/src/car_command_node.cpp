@@ -21,7 +21,7 @@ public:
 
         subscription_joystick_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&car_command::carCommand_JoystickOrder, this, _1));
         subscription_safety_ = this->create_subscription<interfaces::msg::SpeedInfo>("speed_info", 10, std::bind(&car_command::carCommand_SafetyOrder, this, _1));
-        subscription_navigation_ = this->create_subscription<interfaces::msg::JoystickOrder>("autonomous_car_order", 10, std::bind(&car_command::carCommand_AutonomousOrder, this, _1));
+        subscription_autonomous_ = this->create_subscription<interfaces::msg::JoystickOrder>("autonomous_car_order", 10, std::bind(&car_command::carCommand_AutonomousOrder, this, _1));
 
         RCLCPP_INFO(this->get_logger(), "car_command_node READY");
     }
@@ -30,6 +30,7 @@ private:
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_control_;
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_joystick_;
     rclcpp::Subscription<interfaces::msg::SpeedInfo>::SharedPtr subscription_safety_;
+    rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscription_autonomous_;
 
     float speed_limit_front = 1.0;
 	float speed_limit_back = 1.0;

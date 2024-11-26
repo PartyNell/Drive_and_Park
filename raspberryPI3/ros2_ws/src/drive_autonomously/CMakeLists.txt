@@ -10,6 +10,15 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
 
+include_directories(include)
+
+add_executable(autonomous_driving src/autonomous_driving.cpp)
+
+ament_target_dependencies(autonomous_driving rclcpp interfaces)
+
+install(TARGETS autonomous_driving
+  DESTINATION lib/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
