@@ -1,17 +1,11 @@
-#include <memory>
-
-#include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
-#include "sensor_msgs/LaserScan"
-using std::placeholders::_1;
+#include "parkingspace.hpp"
 
 class ParkingSpace : public rclcpp::Node
 {
   public:
-    ParkingSpace()
-    : Node("parking_space")
+    ParkingSpace() : Node("parking_space")
     {
-      subscription_ = this->create_subscription<std_msgs::msg::String>(
+      subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
       "topic", 10, std::bind(&ParkingSpace::topic_callback, this, _1));
     }
 
@@ -19,6 +13,7 @@ class ParkingSpace : public rclcpp::Node
     void topic_callback(const std_msgs::msg::String & msg) const
     {
       RCLCPP_INFO(this->get_logger(), "I got the data");
+      
     }
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
 };
