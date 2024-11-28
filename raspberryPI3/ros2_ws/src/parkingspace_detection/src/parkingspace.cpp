@@ -1,47 +1,33 @@
 #include "parkingspace.hpp"
 
-class ParkingSpace : public rclcpp::Node
+
+ParkingSpace::ParkingSpace() : Node("parking_space")
 {
-  public:
-    ParkingSpace() : Node("parking_space")
-    {
-		subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-		"topic", 10, std::bind(&ParkingSpace::topic_callback, this, _1));
-		scan.ranges = new float[scan.nb_points];
-		scan.intensities = new float[scan.nb_points];
-		scan.nb_points = NB_POINTS; 
-    }
+  RCLCPP_INFO(this->get_logger(), "I'm Here !!!!!");
+	subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", 10, std::bind(&ParkingSpace::topic_callback, this, std::placeholders::_1));
 
-    ~ParkingSpace()
-    {
-		delete[] scan.ranges;
-		delete[] scan.intensities;
-    }
+  RCLCPP_INFO(this->get_logger(), "parkingspace_detection node READY");
+}
 
-  private:
-    void topic_callback(const std_msgs::msg::String & msg) const
-    {
-		scan.angle_min = msg->angle_min;
-		scan.angle_max = msg->angle_max;
-		scan.angle_increment = msg->angle_increment;
-		scan.time_increment = msg->time_increment;
-		scan.scan_time = msg->scan_time;
-		scan.range_min = msg->range_min;
-		scan.range_max = msg->range_max; 
-		for (int i = 0; i < scan.nb_points; i++)
-		{
-			scan.ranges[i] = msg->ranges[i];
-		}
-		
-		for (int i = 0; i < scan.nb_points; i++)
-		{
-			scan.intensities[i] = msg->intensities[i];
-		}
-		RCLCPP_INFO(this->get_logger(), "I got the data");
-      
-    }
-    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
-};
+void ParkingSpace::topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg) 
+{
+	scan.set_angle_min(msg->angle_min);
+	scan.set_angle_max(msg->angle_max);
+	scan.set_angle_increment(msg->angle_increment);
+	scan.set_time_increment(msg->time_increment);
+	scan.set_scan_time(msg->scan_time);
+	scan.set_range_min(msg->range_min);
+	scan.set_range_max(msg->range_max);
+	scan.set_ranges(msg->ranges.data());
+	scan.set_intensities(msg->intensities.data());
+
+	RCLCPP_INFO(this->get_logger(), "I got the data");
+
+	RCLCPP_INFO(this->get_logger(), "La valeur min est à l'indice %d",scan.rechercherMin(scan.get_ranges()));
+	
+}
+
+
 
 int main(int argc, char * argv[])
 {

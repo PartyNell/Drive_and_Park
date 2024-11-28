@@ -5,20 +5,22 @@
 #include <string>
 #include <stdint.h>
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/LaserScan"
+#include "sensor_msgs/msg/laser_scan.hpp"
 #include "LidarScan.hpp"
-#define NB_POINTS 1024
 
 
-ParkingSpace : public rclcpp::Node
+
+class ParkingSpace : public rclcpp::Node
 {
-  public:
-    ParkingSpace();
-    ~ParkingSpace();
+public:
+	ParkingSpace();
 
-  private:
-    LidarScan scan;
+private:
+	LidarScan scan;
+	rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscription_;
 
 
-    void topic_callback(const std_msgs::msg::String & msg);
-}
+	void topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
+};
+
+#endif // PARKINGSPACE_HPP

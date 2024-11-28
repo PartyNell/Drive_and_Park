@@ -7,9 +7,27 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(interfaces REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+
+include_directories(
+  include
+  ${CMAKE_SOURCE_DIR}/include
+)
+include_directories(src)
+
+add_executable(parkingspace_detection src/parkingspace.cpp src/LidarScan.cpp)
+ament_target_dependencies(parkingspace_detection rclcpp interfaces sensor_msgs)
+
+install(TARGETS
+  parkingspace_detection
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
