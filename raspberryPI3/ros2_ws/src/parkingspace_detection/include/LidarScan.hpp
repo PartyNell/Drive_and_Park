@@ -14,17 +14,31 @@ public:
     ~LidarScan();
 
     // Accesseurs
-    float get_angle_min() const;
-    void set_angle_min(float value);
+    float LidarScan::get_angle_min() const;
+    void LidarScan::set_angle_min(float value);
 
-    float get_angle_max() const;
-    void set_angle_max(float value);
+    float LidarScan::get_angle_max() const;
+    void LidarScan::set_angle_max(float value);
 
-    uint32_t get_nb_points() const;
+    float LidarScan::get_angle_increment() const;
+    void LidarScan::set_angle_increment(float value);
 
-    // Accès aux tableaux
-    float *get_ranges() const;
-    float *get_intensities() const;
+    float LidarScan::get_time_increment() const;
+    void LidarScan::set_time_increment(float value);
+
+    float LidarScan::get_scan_time() const;
+    void LidarScan::set_scan_time(float value);
+
+    float LidarScan::get_range_min() const;
+    void LidarScan::set_range_min(float value);
+
+    float LidarScan::get_range_max() const;
+    void LidarScan::set_range_max(float value);
+
+    float *LidarScan::get_ranges() const;
+    float *LidarScan::get_intensities() const;
+
+    uint32_t LidarScan::get_nb_points() const;
 
 private:
     float angle_min;
