@@ -5,8 +5,10 @@
 #include <algorithm>
 
 #define NB_POINTS 1024
-#define LIMITE_MAXI 15
-#define LIMITE_INIT 50	// First 50 values for the initialization of the ref distance
+#define LIMIT_MAXI 15
+#define LIMIT_INIT 50	// First 50 values for the initialization of the ref distance
+#define LENGHT_CAR  0.495
+#define LIMIT_DISTANCE 0.15
 
 class LidarScan {
 public:
@@ -17,6 +19,24 @@ public:
     ~LidarScan();
 
     // Accesseurs
+    bool get_isInitialized() const;
+    void set_isInitialized(bool value);
+
+    bool get_isDetected() const;
+    void set_isDetected(bool value);
+
+    int get_init_compteur() const;
+	void set_init_compteur(int value);
+	
+	float get_ref_distance() const;
+	void set_ref_distance(float value);
+    
+    float get_ref_distance_init() const;
+	void set_ref_distance_init(float value);
+
+    float get_place_distance() const;
+    void set_place_distance(float value);
+
     float get_angle_min() const;
     void set_angle_min(float value);
 
@@ -40,15 +60,6 @@ public:
 
     uint32_t get_nb_points() const;
 
-    int get_init_compteur() const;
-	void set_init_compteur(int value);
-	
-	float get_ref_distance() const;
-	void set_ref_distance(float value);
-    
-    float get_ref_distance_init() const;
-	void set_ref_distance_init(float value);
-
     // Accès aux tableaux
     float *get_ranges() const;
     float *get_intensities() const;
@@ -62,9 +73,14 @@ public:
     int rechercherMin(float tableau[]);
 
 private:
+
+    bool isInitialized;
+    bool isDetected;
+
     int init_compteur;
 	float ref_distance_init;
     float ref_distance;
+    float place_distance;
 
     float angle_min;
     float angle_max;

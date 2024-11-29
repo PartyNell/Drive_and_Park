@@ -19,6 +19,24 @@ LidarScan::~LidarScan() {
 }
 
 // Accesseurs
+bool LidarScan::get_isInitialized() const { return isInitialized; }
+void LidarScan::set_isInitialized(bool value) { isInitialized = value; }
+
+bool LidarScan::get_isDetected() const { return isDetected; }
+void LidarScan::set_isDetected(bool value) { isDetected = value; }
+
+int LidarScan::get_init_compteur() const { return init_compteur; }
+void LidarScan::set_init_compteur(int value) {init_compteur += value;}
+
+float LidarScan::get_ref_distance() const { return ref_distance; }
+void LidarScan::set_ref_distance(float value) {ref_distance = value;}
+
+float LidarScan::get_ref_distance_init() const { return ref_distance_init; }
+void LidarScan::set_ref_distance_init(float value) {ref_distance_init += value;}
+
+float LidarScan::get_place_distance() const { return place_distance; }
+void LidarScan::set_place_distance(float value) { place_distance = value; }
+
 float LidarScan::get_angle_min() const { return angle_min; }
 void LidarScan::set_angle_min(float value) { angle_min = value; }
 
@@ -45,16 +63,6 @@ uint32_t LidarScan::get_nb_points() const { return nb_points; }
 float *LidarScan::get_ranges() const { return ranges; }
 float *LidarScan::get_intensities() const { return intensities; }
 
-int LidarScan::get_init_compteur() const { return init_compteur; }
-void LidarScan::set_init_compteur(int value) {init_compteur += value;}
-
-float LidarScan::get_ref_distance() const { return ref_distance; }
-void LidarScan::set_ref_distance(float value) {ref_distance = value;}
-
-float LidarScan::get_ref_distance_init() const { return ref_distance_init; }
-void LidarScan::set_ref_distance_init(float value) {ref_distance_init += value;}
-
-
 // Modificateurs des tableaux
 void LidarScan::set_ranges(const float *new_ranges) {
     if (new_ranges) {
@@ -71,7 +79,7 @@ void LidarScan::set_intensities(const float *new_intensities) {
 }
 
 int LidarScan::rechercherMin(float tableau[]) {
-    float min = LIMITE_MAXI;
+    float min = LIMIT_MAXI;
     int indexMin = -1;
 
     for (int i = 0; i < NB_POINTS; i++) {
