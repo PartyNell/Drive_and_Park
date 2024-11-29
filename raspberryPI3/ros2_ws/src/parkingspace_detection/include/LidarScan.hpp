@@ -3,8 +3,10 @@
 
 #include <cstdint>
 #include <algorithm>
+
 #define NB_POINTS 1024
-#define LIMITE_MAXI 15 
+#define LIMITE_MAXI 15
+#define LIMITE_INIT 50	// First 50 values for the initialization of the ref distance
 
 class LidarScan {
 public:
@@ -38,6 +40,15 @@ public:
 
     uint32_t get_nb_points() const;
 
+    int get_init_compteur() const;
+	void set_init_compteur(int value);
+	
+	float get_ref_distance() const;
+	void set_ref_distance(float value);
+    
+    float get_ref_distance_init() const;
+	void set_ref_distance_init(float value);
+
     // Accès aux tableaux
     float *get_ranges() const;
     float *get_intensities() const;
@@ -51,6 +62,10 @@ public:
     int rechercherMin(float tableau[]);
 
 private:
+    int init_compteur;
+	float ref_distance_init;
+    float ref_distance;
+
     float angle_min;
     float angle_max;
     float angle_increment;

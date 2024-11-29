@@ -45,6 +45,16 @@ uint32_t LidarScan::get_nb_points() const { return nb_points; }
 float *LidarScan::get_ranges() const { return ranges; }
 float *LidarScan::get_intensities() const { return intensities; }
 
+int LidarScan::get_init_compteur() const { return init_compteur; }
+void LidarScan::set_init_compteur(int value) {init_compteur += value;}
+
+float LidarScan::get_ref_distance() const { return ref_distance; }
+void LidarScan::set_ref_distance(float value) {ref_distance = value;}
+
+float LidarScan::get_ref_distance_init() const { return ref_distance_init; }
+void LidarScan::set_ref_distance_init(float value) {ref_distance_init += value;}
+
+
 // Modificateurs des tableaux
 void LidarScan::set_ranges(const float *new_ranges) {
     if (new_ranges) {
