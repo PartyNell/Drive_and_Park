@@ -21,9 +21,10 @@ void ParkingSpace::topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr m
 	scan.set_ranges(msg->ranges.data());
 	scan.set_intensities(msg->intensities.data());
 
-	RCLCPP_INFO(this->get_logger(), "I got the data");
-
-	RCLCPP_INFO(this->get_logger(), "La valeur min est à l'indice %d",scan.rechercherMin(scan.get_ranges()));
+	// RCLCPP_INFO(this->get_logger(), "I got the data");
+	// RCLCPP_INFO(this->get_logger(), "La valeur min est à l'indice %d",scan.rechercherMin(scan.get_ranges()));
+	float dist_at_right = scan.get_range_at(0);
+	RCLCPP_INFO(this->get_logger(), "Distance à droite : %f", dist_at_right);
 	
 }
 
