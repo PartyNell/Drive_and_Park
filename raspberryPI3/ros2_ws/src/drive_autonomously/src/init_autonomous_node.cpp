@@ -2,9 +2,16 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/joystick_order.hpp"
+
+#include "std_msgs/msg/bool.hpp"
+
+#define CAR_SIZE 89 
+#define R_MIN 1,7 
+#define T0 20
 
 using namespace std::chrono_literals;
 
@@ -14,12 +21,13 @@ public:
     init_autonomous()
     : Node("init_autonomous_node"), count_(0)
     {
-        publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_angle_order", 10);
-        publisher_init_ok_ = this->create_publisher<interfaces::msg::EventInfo>("init_finished", 10);
+        publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_car_order", 10);
+        publisher_init_ok_ = this->create_publisher<std_msgs::msg::Bool>("init_finished", 10);
 
-        subscription_start_init_ = this->create_subscription<interfaces::msg::EventInfo>("start_init", 10, std::bind(&init_autonomous::start_init_order, this, _1));
+        subscription_start_init_ = this->create_subscription<std_msgs::msg::Bool>("start_init", 10, std::bind(&init_autonomous::start_init_order, this, _1));
+        subscription_ultrasonic_ = this->create_subscription<interfaces::msg::Ultrasonic>("/us_data", 10, std::bind(&init_autonomous::compute_angle, this, std::placeholders::_1));
 
-        timer_ = this->create_wall_timer(20ms, std::bind(&angle_control::timer_callback, this));
+        timer_ = this->create_wall_timer(20ms, std::bind(&init_autonomous::timer_callback, this));
 
         RCLCPP_INFO(this->get_logger(), "init_autonomous_node READY");
     }
@@ -27,28 +35,76 @@ public:
 private:
     void timer_callback()
     {
-        auto car_order = interfaces::msg::JoystickOrder();
-        car_order.start = true;
-        car_order.mode = 1;
-        car_order.throttle = throttle_order;
-        car_order.steer = steer_order;
-        car_order.reverse = false;
-        publisher_car_order_->publish(car_order);
+        if(init_state){
+            float steer = (2*R_MIN*angle_to_perform)/(throttle_ordre*1,6*T0);
+            if(steer < -1.0){
+                steer_order = -1.0;
+            } else if(steer > 1.0){
+                steer_order = 1.0;
+            } else {
+                steer_order = steer;
+            }
+
+            auto car_order = interfaces::msg::JoystickOrder();
+            car_order.start = true;
+            car_order.mode = 1;
+            car_order.throttle = throttle_order;
+            car_order.steer = steer_order;
+            car_order.reverse = false;
+            
+            publisher_car_order_->publish(car_order);
+
+            if(steer_order == 0){
+                ++validation_counter;
+                if(validation_counter == 5) {
+                    std_msgs::msg::Bool finished = true;
+                    publisher_init_ok_->publish(finished);
+
+                    validation_counter = 0;
+                    init_state = false;
+                }
+            } else {
+                validation_counter = 0;
+            }
+        }
     }
+
+    int start_init_order(std_msgs::msg::Bool i){
+        init_state = i;
+    }  
+
+    void compute_angle(const interfaces::msg::Ultrasonic::SharedPtr us) {
+        //compute the angle between the initial position of the car and the aligned position
+        if(us.front_right <= 200 && us.rear_right <= 200){
+            angle_to_perform = atan((us.front_right-us.rear_right)/CAR_SIZE);
+        } else if (init_state && (us.front_right > 200 || us.rear_right > 200)) {
+            //the wall or the parked car are too far to compute the angle
+            init_state = false;
+
+            std_msgs::msg::Bool finished = false;
+            publisher_init_ok_->publish(finished);
+        }
+    }
+
 
     // Private variables
 
     float steer_order; // angle sent to the node `car_control_node`
-    float throttle_order; // throttle sent to the node `car_control_node`
-    bool init_is_finished = false;
+    float throttle_order = 0.7; // throttle sent to the node `car_control_node`
+    bool init_state = false;
+
+    int validation_counter = 0;
+
+    int angle_to_perform;
 
 
     // Publisher
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
-    rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_ok_;
 
     //Subscribers
-    rclcpp::Subscription<interfaces::msg::EventInfo>::SharedPtr subscription_start_init_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_start_init_;
+    rclcpp::Subscription<interfaces::msg::Ultrasonic>::SharedPtr subscription_ultrasonic_
 
     rclcpp::TimerBase::SharedPtr timer_;
     size_t count_;
