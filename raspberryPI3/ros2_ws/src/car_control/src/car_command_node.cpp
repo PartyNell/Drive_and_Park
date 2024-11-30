@@ -47,16 +47,10 @@ private:
         control_order = joystick_order_saved;
 		if (control_order.reverse) {
 			control_order.throttle *= speed_limit_back;
-			RCLCPP_INFO(this->get_logger(), "Backward -> Speed coeff: %f", speed_limit_back);
 		}
 		else {
 			control_order.throttle *= speed_limit_front;
-			RCLCPP_INFO(this->get_logger(), "Forward -> Speed coeff: %f", speed_limit_front);
 		}
-
-        RCLCPP_INFO(this->get_logger(), "Mode : %d", joystickOrder.mode);
-        RCLCPP_INFO(this->get_logger(), "Throttle : %f", control_order.throttle);
-        RCLCPP_INFO(this->get_logger(), "Steer : %f", joystickOrder.steer);
 
         publisher_car_control_->publish(control_order);
     }
