@@ -22,8 +22,8 @@ public:
     bool get_isInitialized() const;
     void set_isInitialized(bool value);
 
-    bool get_isDetected() const;
-    void set_isDetected(bool value);
+    bool get_isDetecting() const;
+    void set_isDetecting(bool value);
 
     int get_init_compteur() const;
 	void set_init_compteur(int value);
@@ -75,7 +75,7 @@ public:
 private:
 
     bool isInitialized;
-    bool isDetected;
+    bool isDetecting;
 
     int init_compteur;
 	float ref_distance_init;

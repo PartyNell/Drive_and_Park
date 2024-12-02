@@ -22,8 +22,8 @@ LidarScan::~LidarScan() {
 bool LidarScan::get_isInitialized() const { return isInitialized; }
 void LidarScan::set_isInitialized(bool value) { isInitialized = value; }
 
-bool LidarScan::get_isDetected() const { return isDetected; }
-void LidarScan::set_isDetected(bool value) { isDetected = value; }
+bool LidarScan::get_isDetecting() const { return isDetecting; }
+void LidarScan::set_isDetecting(bool value) { isDetecting = value; }
 
 int LidarScan::get_init_compteur() const { return init_compteur; }
 void LidarScan::set_init_compteur(int value) {init_compteur += value;}
