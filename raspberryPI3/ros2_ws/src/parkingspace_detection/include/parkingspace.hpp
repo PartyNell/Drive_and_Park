@@ -17,11 +17,13 @@ private:
 	
 	LidarScan scan;
 	rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscription_;
+	rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_;
 	rclcpp::Clock::SharedPtr clock_;  // ROS 2 clock
     rclcpp::Time event_1_time_;      // Time for Event 1
     rclcpp::Time event_2_time_;      // Time for Event 2
 
-	void topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
+	void detect_parking_space(const sensor_msgs::msg::LaserScan::SharedPtr msg);
+	void increment_parking_space_length(const interfaces::msg::MotorsFeedback::SharedPtr msg);
 };
 
 #endif // PARKINGSPACE_HPP

@@ -10,7 +10,8 @@ using namespace std::chrono_literals;
 ParkingSpace::ParkingSpace() : Node("parking_space")
 {
 
-	subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", 10, std::bind(&ParkingSpace::topic_callback, this, std::placeholders::_1));
+	subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", 10, std::bind(&ParkingSpace::detect_parking_space, this, std::placeholders::_1));
+	subscription_ = this->create_subscription<interfaces::msg::MotorsFeedback>("/motors_feedback", 10, std::bind(&ParkingSpace::increment_parking_space_length, this, std::placeholders::_1));
 	scan.set_init_compteur(0);
 	scan.set_ref_distance_init(0);
 	scan.set_ref_distance(0);
@@ -22,7 +23,7 @@ ParkingSpace::ParkingSpace() : Node("parking_space")
 	RCLCPP_INFO(this->get_logger(), "Initialization...");
 }
 
-void ParkingSpace::topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg) 
+void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::SharedPtr msg) 
 {
 	scan.set_angle_min(msg->angle_min);
 	scan.set_angle_max(msg->angle_max);
@@ -58,7 +59,7 @@ void ParkingSpace::topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr m
 			if ((scan.get_range_at(0) >= scan.get_ref_distance() + LENGHT_CAR) && !scan.get_isDetecting()){ // If the distance detected is above or equal to the reference distance plus the lenght of the car
 				
 				event_1_time_ = clock_->now(); // Then we capture the current time and print it for info purpose
-				RCLCPP_INFO(this->get_logger(), "Detected difference of distance at: %f.%09ld", event_1_time_.seconds(), event_1_time_.nanoseconds());
+				RCLCPP_INFO(this->get_logger(), "Beginning of a potential place");
 				scan.set_place_distance(scan.get_range_at(0));
 				scan.set_isDetecting(true); // We set detected to true as we might have detected a place
 			}
@@ -66,7 +67,7 @@ void ParkingSpace::topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr m
 			else if (scan.get_isDetecting() && ((scan.get_range_at(0) >= (scan.get_ref_distance() - LIMIT_DISTANCE)) && (scan.get_range_at(0) <= (scan.get_ref_distance() + LIMIT_DISTANCE)))){ // If we already might have detected a place and we have a distance back in the limit around our ref distance then we might have the end of the place
 				
 				event_2_time_ = clock_->now();  // So we capture the current time for the second time
-				RCLCPP_INFO(this->get_logger(), "Going back to the reference distance: %f.%09ld", event_2_time_.seconds(), event_2_time_.nanoseconds());
+				RCLCPP_INFO(this->get_logger(), "I might have detected a parking space");
 				scan.set_isDetecting(false); // We set back the detected to false for new detetction
 				hasDetected = true; 
 			}
@@ -91,6 +92,11 @@ void ParkingSpace::topic_callback(const sensor_msgs::msg::LaserScan::SharedPtr m
 	//RCLCPP_INFO(this->get_logger(), "Distance à droite : %f", dist_at_right);
 	}
 	
+}
+
+void ParkingSpace::increment_parking_space_length(const interfaces::msg::MotorsFeedback::SharedPtr msg) {
+	static float length = 0.0, diametre = 20.0, pi, pulse_for_a_revolution = 36;
+	length += msg.left_rear_odometry*diametre*pi/pulse_for_a_revolution;
 }
 
 
