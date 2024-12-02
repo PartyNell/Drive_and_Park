@@ -13,9 +13,12 @@ find_package(interfaces REQUIRED)
 include_directories(include)
 
 add_executable(autonomous_driving src/autonomous_driving.cpp)
-ament_target_dependencies(autonomous_driving rclcpp interfaces)
+add_executable(init_autonomous_node src/init_autonomous_node.cpp)
 
-install(TARGETS autonomous_driving
+ament_target_dependencies(autonomous_driving rclcpp interfaces std_msgs)
+ament_target_dependencies(init_autonomous_node rclcpp interfaces std_msgs)
+
+install(TARGETS autonomous_driving init_autonomous_node
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
@@ -31,4 +34,3 @@ if(BUILD_TESTING)
 endif()
 
 ament_package()
-
