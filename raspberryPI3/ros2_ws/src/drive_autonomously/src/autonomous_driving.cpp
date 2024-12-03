@@ -5,6 +5,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/joystick_order.hpp"
+#include "interfaces/msg/motors_feedback.hpp"
 #include "std_msgs/msg/bool.hpp"
 
 #define WHEEL_RADIUS 10.0f
@@ -41,7 +42,7 @@ class AutonomousDriving : public rclcpp::Node
             init_autonomous.data = true;
             publisher_init_state_->publish(init_autonomous);
 
-			previous_time = ros::Time::now().toSec();
+			previous_time = rclcpp::Clock().now().seconds();
             init_in_progress = true;
             search_in_progress = false;
         } else if (mode != 1 && init_in_progress){
@@ -90,7 +91,7 @@ class AutonomousDriving : public rclcpp::Node
 			rear_speed = (motorsFeedback.left_rear_speed + motorsFeedback.left_rear_speed)/2.0;
 			car_speed = (rear_speed * 2 * 3.14 * WHEEL_RADIUS) / 60.0;
 
-			actual_time = ros::Time::now().toSec();
+			actual_time = rclcpp::Clock().now().seconds();
 			delta_time = actual_time - previous_time;
 
 			// Compute the distance travelled from the beginning
@@ -104,7 +105,7 @@ class AutonomousDriving : public rclcpp::Node
 			{
 				// The speed sent to the control of the car is 0
 				car_order.throttle = 0.0;
-				CLCPP_INFO(this->get_logger(), "The car has driven %.2f meters.", distance_travelled);
+				RCLCPP_INFO(this->get_logger(), "The car has driven %.2f meters.", distance_travelled);
 			}
 		}
 	}
@@ -126,7 +127,7 @@ class AutonomousDriving : public rclcpp::Node
     //Subscribers
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscriber_autonomous_mode_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_init_ok_;
-	rclcpp::Subscription<std_msgs::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
+	rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     
     //Attributes
     size_t count_;
@@ -135,12 +136,11 @@ class AutonomousDriving : public rclcpp::Node
     bool search_in_progress = false;
     interfaces::msg::JoystickOrder car_order;
 
-	bool search_in_progress = false;
 	float rear_speed;
 	float car_speed;
 
 	float distance_travelled = 0.0;
-	float previous_time = ros::Time::now().toSec();
+	float previous_time = rclcpp::Clock().now().seconds();
 	float actual_time = 0;
 	float delta_time = 0;
 };
