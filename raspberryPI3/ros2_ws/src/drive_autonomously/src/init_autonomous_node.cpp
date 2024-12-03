@@ -13,7 +13,7 @@
 #define CAR_SIZE 89.0f 
 #define CAR_SPEED 1.6f
 #define R_MIN 1.7f 
-#define T0 20 //in seconds
+#define T0 0.1 //in seconds
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -39,7 +39,7 @@ private:
     void timer_callback()
     {
         if(init_state){
-            float steer = 10*(2*R_MIN*angle_to_perform)/(throttle_order*CAR_SPEED*T0);
+            float steer = (2*R_MIN*angle_to_perform)/(throttle_order*CAR_SPEED*T0);
             if(steer < -1.0){
                 steer_order = -1.0;
             } else if(steer > 1.0){
@@ -59,7 +59,7 @@ private:
             
             publisher_car_order_->publish(car_order);
 
-            if(abs(steer_order) < 0.01){
+            if(abs(steer_order) < 0.05){
                 ++validation_counter;
                 if(validation_counter == 5) {
                     std_msgs::msg::Bool finished;
@@ -67,8 +67,7 @@ private:
                     publisher_init_finished_->publish(finished);
 
                     validation_counter = 0;
-          <<<<<<< HEAD
-#include <          init_state = false;
+                    init_state = false;
                 }
             } else {
                 validation_counter = 0;
