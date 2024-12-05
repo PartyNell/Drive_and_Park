@@ -176,7 +176,8 @@ private:
         joystickOrderMsg.steer  = requestedAngle;
         joystickOrderMsg.reverse = reverse;
 
-        publisher_joystick_order_->publish(joystickOrderMsg); //Send order to the car_control_node
+        publisher_joystick_order_->publish(joystickOrderMsg); //Send order to the car_command_node
+        
     }
 
     //Joystick variables

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(car_control)
+project(obstacle_detection)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -9,33 +9,19 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(interfaces REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
+# uncomment the following section in order to fill in
+# further dependencies manually.
+# find_package(<dependency> REQUIRED)
 
 include_directories(include)
 
-add_executable(car_command_node src/car_command_node.cpp)
+add_executable(obstacle_detection src/obstacle_detection.cpp)
+ament_target_dependencies(obstacle_detection rclcpp interfaces)
 
-add_executable(car_control_node 
-  src/car_control_node.cpp
-  src/steeringCmd.cpp
-  src/propulsionCmd.cpp
+install(TARGETS
+  obstacle_detection
+  DESTINATION lib/${PROJECT_NAME}
 )
-
-
-ament_target_dependencies(car_control_node rclcpp interfaces sensor_msgs std_srvs)
-ament_target_dependencies(car_command_node rclcpp interfaces)
-#ament_export_include_directories(include)
-
-target_include_directories(car_control_node PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_features(car_control_node PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-
-
-install(TARGETS car_control_node car_command_node
-  DESTINATION lib/${PROJECT_NAME})
-
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
