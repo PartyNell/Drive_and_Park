@@ -7,6 +7,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "LidarScan.hpp"
+#include "variable.hpp"
+#include "std_msgs/msg/int8.hpp"
 #include "interfaces/msg/motors_feedback.hpp"
 #include <math.h>
 #include <cmath>
@@ -29,16 +31,18 @@ public:
 private:
 	std::mutex scan_mutex_;
 	std::mutex length_mutex_;
+
 	LidarScan scan;
 	float m_length, m_depth;
+	ParkingType detected_parking_type_; 
+
 	rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_scan_subscription_;
 	rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr motors_feedback_subscription_;
-	rclcpp::Clock::SharedPtr clock_;  // ROS 2 clock
-    rclcpp::Time event_1_time_;      // Time for Event 1
-    rclcpp::Time event_2_time_;      // Time for Event 2
-
+	rclcpp::TimerBase::SharedPtr timer_;
+	
 	void detect_parking_space(const sensor_msgs::msg::LaserScan::SharedPtr msg);
 	void increment_parking_space_length(const interfaces::msg::MotorsFeedback::SharedPtr msg);
+	void parking_place_info();
 };
 
 #endif // PARKINGSPACE_HPP

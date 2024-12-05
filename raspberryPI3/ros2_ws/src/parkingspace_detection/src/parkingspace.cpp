@@ -3,11 +3,13 @@
 
 using namespace std::chrono_literals;
 
-ParkingSpace::ParkingSpace() : Node("parking_space")
+ParkingSpace::ParkingSpace() : Node("parking_space"), detected_parking_type_(ParkingType::NONE)
 {
 
 	laser_scan_subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", 10, std::bind(&ParkingSpace::detect_parking_space, this, std::placeholders::_1));
 	motors_feedback_subscription_ = this->create_subscription<interfaces::msg::MotorsFeedback>("/motors_feedback", 10, std::bind(&ParkingSpace::increment_parking_space_length, this, std::placeholders::_1));
+	type_place_info = this->create_publisher<std_msgs::msg::Int32>("/info_parking_place", 10);
+    timer_ = this->create_wall_timer(500ms, std::bind(&ParkingSpace::parking_place_info, this));
 	scan.set_init_compteur(0);
 	scan.set_ref_distance_init(0);
 	scan.set_ref_distance(0);
@@ -59,7 +61,7 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 		if (!isinf(scan.get_range_at(0))){
 
 			if ((scan.get_range_at(0) >= scan.get_ref_distance() + LENGHT_CAR) && !scan.get_isDetecting()){ // If the distance detected is above or equal to the reference distance plus the lenght of the car
-				event_1_time_ = clock_->now(); // Then we capture the current time and print it for info purpose
+				
 				RCLCPP_INFO(this->get_logger(), "Beginning of a potential place");
 				scan.set_place_distance(scan.get_range_at(0));
 				m_length = 0.0;
@@ -69,7 +71,6 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 		
 			else if (scan.get_isDetecting() && ((scan.get_range_at(0) >= (scan.get_ref_distance() - LIMIT_DISTANCE)) && (scan.get_range_at(0) <= (scan.get_ref_distance() + LIMIT_DISTANCE)))){ // If we already might have detected a place and we have a distance back in the limit around our ref distance then we might have the end of the place
 				
-				event_2_time_ = clock_->now();  // So we capture the current time for the second time
 				RCLCPP_INFO(this->get_logger(), "I might have detected a parking space");
 				scan.set_isDetecting(false); // We set back the detected to false for new detetction
 				hasDetected = true; 
@@ -77,35 +78,25 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 		}
 		else{
 
-			// RCLCPP_INFO(this->get_logger(), "Distance Inf !!!!");
 		}
 
-	if (hasDetected){
-		// Compute both distance to get the size or type of a place
-		m_depth = (scan.get_place_distance()-scan.get_ref_distance()) * 100;	// in cm
-		RCLCPP_INFO(this->get_logger(), "Depth of the place  %f", m_depth);
-		RCLCPP_INFO(this->get_logger(), "Width of the place  %f", m_length);
+	 if (hasDetected) {
+        m_depth = (scan.get_place_distance() - scan.get_ref_distance()) * 100;
 
-		// compute the full distance 
-		if (	m_length >= PARKING_SPACE_LIMIT_STRAIGHT_LENGTH 
-			&& 	m_depth >= PARKING_SPACE_LIMIT_STRAIGHT_DEPTH)
-		{
-			RCLCPP_INFO(this->get_logger(), "Straight Parking space detected");
-		}
-		else if (	m_length >= PARKING_SPACE_LIMIT_PARALLEL_LENGTH 
-				&& 	m_depth >= PARKING_SPACE_LIMIT_PARALLEL_DEPTH)
-		{
-			RCLCPP_INFO(this->get_logger(), "Parallel Parking space detected");
-		}
-		else
-		{
-			RCLCPP_INFO(this->get_logger(), "Not a parking space, keep going !");
-		}
-	}
+        if (m_length >= PARKING_SPACE_LIMIT_STRAIGHT_LENGTH && m_depth >= PARKING_SPACE_LIMIT_STRAIGHT_DEPTH) {
+            detected_parking_type_ = ParkingType::PERPENDICULAR;
+            RCLCPP_INFO(this->get_logger(), "Perpendicular parking space detected");
+			RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
+        } else if (m_length >= PARKING_SPACE_LIMIT_PARALLEL_LENGTH && m_depth >= PARKING_SPACE_LIMIT_PARALLEL_DEPTH) {
+            detected_parking_type_ = ParkingType::PARALLEL;
+            RCLCPP_INFO(this->get_logger(), "Parallel parking space detected");
+			RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
+        } else {
+            detected_parking_type_ = ParkingType::NONE;
+            RCLCPP_INFO(this->get_logger(), "Not a valid parking space");
+        }
+    }
 	
-
-	//float dist_at_right = scan.get_range_at(0);
-	//RCLCPP_INFO(this->get_logger(), "Distance à droite : %f", dist_at_right);
 	}
 	
 }
@@ -125,6 +116,32 @@ void ParkingSpace::increment_parking_space_length(const interfaces::msg::MotorsF
 	}
 }
 
+void ParkingSpace::parking_place_info(){
+
+	if (detected_parking_type_ == ParkingType::NONE) {
+        return; // Do nothing if no valid parking space is detected
+    }
+
+    auto message = std_msgs::msg::Int32();
+    message.data = static_cast<int32_t>(detected_parking_type_);
+
+    switch (detected_parking_type_) {
+        case ParkingType::PERPENDICULAR:
+            RCLCPP_INFO(this->get_logger(), "Publishing: Perpendicular parking space");
+            break;
+        case ParkingType::PARALLEL:
+            RCLCPP_INFO(this->get_logger(), "Publishing: Parallel parking space");
+            break;
+        case ParkingType::ANGLED:
+            RCLCPP_INFO(this->get_logger(), "Publishing: Angled parking space");
+            break;
+        default:
+            break;
+    }
+
+    type_place_info->publish(message);  // Only publish if a valid parking type is detected
+
+}
 
 int main(int argc, char * argv[])
 {
