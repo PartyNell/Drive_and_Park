@@ -87,13 +87,59 @@ private:
         if(us.front_right <= 200 && us.rear_right <= 200){
             tmp_angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
 
+            //compute the maximum angle that could be performed : robustness for the holes between the cars
             actual_time = rclcpp::Clock().now().seconds();
             delta_time = actual_time - previous_time;
 
-            maximal_angle_perform = (throttle_order*CAR_SPEED*delta_time)/(2*R_MIN);
+            maximal_angle_perform = (steer_order*throttle_order*CAR_SPEED*delta_time)/(2*R_MIN);
+
+            //save the angle to perform saturate by the capacities of the car
+            if(abs(angle_to_perform - tmp_angle_to_perform) <= maximal_angle_perform){
+                angle_to_perform = tmp_angle_to_perform;
+            } 
+            else {
+                angle_to_perform = maximal_angle_perform * copysign(1.0, tmp_angle_to_perform);
+            }
+
+            RCLCPP_INFO(this->get_logger(), "ANGLE TO PERFORM : %f", angle_to_perform);
+
+            previous_time = actual_time;
+            
+        } else if (init_state && (us.front_right > 200 || us.rear_right > 200)) {
+            //the wall or the parked car are too far to compute the angle
+            init_state = false;
+
+            std_msgs::msg::Bool finished;
+            finished.data = false;
+            publisher_init_finished_->publish(finished);
+        }
+    }
+
+    void compute_angle(const interfaces::msg::Ultrasonic & us) {
+        //compute the angle between the initial position of the car and the aligned position
+        RCLCPP_INFO(this->get_logger(), "ULTRASONIC : front= %d, back=%d", us.front_right, us.rear_right);
+
+        if(us.front_right <= 200 && us.rear_right <= 200){
+            tmp_angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
+
+            //compute the maximum angle that could be performed : robustness for the holes between the cars
+            actual_time = rclcpp::Clock().now().seconds();
+            delta_time = actual_time - previous_time;
+
+            maximal_angle_perform = (steer_order*throttle_order*CAR_SPEED*delta_time)/(2*R_MIN);
+
+            //
+            if(abs(angle_to_perform - tmp_angle_to_perform) <= maximal_angle_perform){
+                angle_to_perform = tmp_angle_to_perform;
+            } 
+            else {
+                angle_to_perform = maximal_angle_perform * copysign(1.0, tmp_angle_to_perform);
+            }
 
             angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
             RCLCPP_INFO(this->get_logger(), "ANGLE TO PERFORM : %f", angle_to_perform);
+
+            previous_time = actual_time;
             
         } else if (init_state && (us.front_right > 200 || us.rear_right > 200)) {
             //the wall or the parked car are too far to compute the angle
