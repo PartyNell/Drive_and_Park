@@ -31,6 +31,8 @@ public:
         subscription_ultrasonic_ = this->create_subscription<interfaces::msg::Ultrasonic>("/us_data", 10, std::bind(&init_autonomous::compute_angle, this, _1));
 
         timer_ = this->create_wall_timer(100ms, std::bind(&init_autonomous::timer_callback, this));
+        clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
+        previous_time = clock_->now().seconds();
 
         RCLCPP_INFO(this->get_logger(), "init_autonomous_node READY");
     }
@@ -91,7 +93,7 @@ private:
             actual_time = rclcpp::Clock().now().seconds();
             delta_time = actual_time - previous_time;
 
-            maximal_angle_perform = (steer_order*throttle_order*CAR_SPEED*delta_time)/(2*R_MIN);
+            maximal_angle_perform = (steer_order*throttle_order*CAR_SPEED)/(2*R_MIN);
 
             //save the angle to perform saturate by the capacities of the car
             if(abs(angle_to_perform - tmp_angle_to_perform) <= maximal_angle_perform){
@@ -123,12 +125,11 @@ private:
             tmp_angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
 
             //compute the maximum angle that could be performed : robustness for the holes between the cars
-            actual_time = rclcpp::Clock().now().seconds();
+            //actual_time = clock_->now().seconds();
             delta_time = actual_time - previous_time;
 
             maximal_angle_perform = (steer_order*throttle_order*CAR_SPEED*delta_time)/(2*R_MIN);
 
-            //
             if(abs(angle_to_perform - tmp_angle_to_perform) <= maximal_angle_perform){
                 angle_to_perform = tmp_angle_to_perform;
             } 
@@ -162,7 +163,8 @@ private:
 
     float angle_to_perform;
 
-    float previous_time = rclcpp::Clock().now().seconds();
+    rclcpp::Clock::SharedPtr clock_;
+    float previous_time;
     float actual_time;
 
 
