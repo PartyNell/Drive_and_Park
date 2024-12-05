@@ -85,6 +85,13 @@ private:
         RCLCPP_INFO(this->get_logger(), "ULTRASONIC : front= %d, back=%d", us.front_right, us.rear_right);
 
         if(us.front_right <= 200 && us.rear_right <= 200){
+            tmp_angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
+
+            actual_time = rclcpp::Clock().now().seconds();
+            delta_time = actual_time - previous_time;
+
+            maximal_angle_perform = (throttle_order*CAR_SPEED*delta_time)/(2*R_MIN);
+
             angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
             RCLCPP_INFO(this->get_logger(), "ANGLE TO PERFORM : %f", angle_to_perform);
             
@@ -108,6 +115,9 @@ private:
     int validation_counter = 0;
 
     float angle_to_perform;
+
+    float previous_time = rclcpp::Clock().now().seconds();
+    float actual_time;
 
 
     // Publisher
