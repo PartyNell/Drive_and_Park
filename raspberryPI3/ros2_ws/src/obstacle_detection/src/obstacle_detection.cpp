@@ -1,7 +1,8 @@
 #include "obstacle_detection.hpp"
 
 ObstacleDetection::ObstacleDetection() 
-    : Node("obstacle_detection"), will_send_speed_(false), speed_value_front(SpeedCoefficient::NORMAL), speed_value_back(SpeedCoefficient::NORMAL)
+    : Node("obstacle_detection"), will_send_speed_(false), speed_value_front(SpeedCoefficient::NORMAL), 
+        speed_value_back(SpeedCoefficient::NORMAL), parkmod_(false)
 {
     // Create a subscription to the "/us_data" topic
     subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>(
@@ -30,8 +31,35 @@ void ObstacleDetection::timer_callback()
 void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
 {
     std::string orientation = is_front ? "[FRONT]" : "[BACK]";
+  
+///////////////////////////////////////////////////////////////////////////////////
+    /*Park security
+    On the "parkmod", compare ultrasonic sensor with the 15cm margin. 
+    Stop the car if the direction is the same as the sensor detection
+    */
+    if (get_parkmod() == true && 
+        sensor_value < THRESHOLD_PARK_STOP)
+    {
+        will_send_speed_ = true;
 
-    if (sensor_value < THRESHOLD_STOP)
+        if (is_front) {
+            if (speed_value_front != SpeedCoefficient::STOP){
+                RCLCPP_WARN(this->get_logger(), "'%s' STOP 15CM !!!", orientation.c_str());
+            }
+            speed_value_front = SpeedCoefficient::STOP; 
+        }
+
+        else {
+            if (speed_value_back != SpeedCoefficient::STOP){
+                RCLCPP_WARN(this->get_logger(), "'%s' STOP 15CM !!!", orientation.c_str());
+            }
+            speed_value_back = SpeedCoefficient::STOP; 
+        }
+    } 
+////////////////////////////////////////////////////////////////////////////////
+     
+    if (get_parkmod() == false &&
+        sensor_value < THRESHOLD_STOP)
     {
         will_send_speed_ = true;
         if (is_front){
@@ -46,7 +74,9 @@ void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
             speed_value_back = SpeedCoefficient::STOP; 
         }
     }
-    else if (sensor_value < THRESHOLD_SLOW)
+    
+    else if (get_parkmod() == false &&
+        sensor_value < THRESHOLD_SLOW)
     {
         will_send_speed_ = true;
         if (is_front){
@@ -61,7 +91,9 @@ void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
             speed_value_back = SpeedCoefficient::WALKING_PACE; 
         }
     }
-    else if (sensor_value < THRESHOLD_FIRST_SLOW)
+    
+    else if (get_parkmod() == false &&
+        sensor_value < THRESHOLD_FIRST_SLOW)
     {
         will_send_speed_ = true;
         if (is_front){
@@ -76,7 +108,8 @@ void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
             speed_value_back = SpeedCoefficient::HALF_SPEED; 
         }
     }
-    else if (sensor_value < THRESHOLD_CAREFUL)
+    else if (get_parkmod() == false &&
+        sensor_value < THRESHOLD_CAREFUL)
     {
         RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFULL !!!", orientation.c_str());
         will_send_speed_ = true;
@@ -93,7 +126,7 @@ void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
         if (is_front)
             speed_value_front = SpeedCoefficient::NORMAL; 
         else
-            speed_value_back = SpeedCoefficient::NORMAL; 
+            speed_value_back = SpeedCoefficient::NORMAL;
     }
 }
 

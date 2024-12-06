@@ -12,12 +12,20 @@
 #define THRESHOLD_FIRST_SLOW 70
 #define THRESHOLD_CAREFUL 100
 
+//////////////////////////////
+#define THRESHOLD_PARK_STOP 15
+//////////////////////////////
+
 using namespace std::chrono_literals;
 
 class ObstacleDetection : public rclcpp::Node
 {
 public:
     ObstacleDetection();
+//////////////////////////////////////////////////////    
+    bool get_parkmod() const { return parkmod_; }
+    void set_parkmod(bool value) { parkmod_ = value; }
+//////////////////////////////////////////////////////
 
 private:
     rclcpp::TimerBase::SharedPtr timer_;
@@ -25,6 +33,9 @@ private:
     rclcpp::Subscription<interfaces::msg::Ultrasonic>::SharedPtr subscription_;
     size_t count_;
 
+////////////////////////////////////////////////////////
+    bool parkmod_;
+////////////////////////////////////////////////////////
     bool will_send_speed_;
     float speed_value_front, speed_value_back;
 

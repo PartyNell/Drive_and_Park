@@ -19,8 +19,10 @@ public:
     {
         publisher_car_control_= this->create_publisher<interfaces::msg::JoystickOrder>("car_command", 10);
 
-        subscription_joystick_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&car_command::carCommand_JoystickOrder, this, _1));
-        subscription_safety_ = this->create_subscription<interfaces::msg::SpeedInfo>("speed_info", 10, std::bind(&car_command::carCommand_SafetyOrder, this, _1));
+        subscription_joystick_ = this->create_subscription<interfaces::msg::JoystickOrder>(
+            "joystick_order", 10, std::bind(&car_command::carCommand_JoystickOrder, this, _1));
+        subscription_safety_ = this->create_subscription<interfaces::msg::SpeedInfo>(
+            "speed_info", 10, std::bind(&car_command::carCommand_SafetyOrder, this, _1));
 
         RCLCPP_INFO(this->get_logger(), "car_command_node READY");
     }
