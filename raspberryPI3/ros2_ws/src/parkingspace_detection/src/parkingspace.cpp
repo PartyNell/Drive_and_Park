@@ -10,15 +10,19 @@ ParkingSpace::ParkingSpace() : Node("parking_space"), detected_parking_type_(Par
 	motors_feedback_subscription_ = this->create_subscription<interfaces::msg::MotorsFeedback>("/motors_feedback", 10, std::bind(&ParkingSpace::increment_parking_space_length, this, std::placeholders::_1));
 	type_place_info = this->create_publisher<std_msgs::msg::Int32>("/info_parking_place", 10);
     timer_ = this->create_wall_timer(500ms, std::bind(&ParkingSpace::parking_place_info, this));
+	
 	scan.set_init_compteur(0);
 	scan.set_ref_distance_init(0);
 	scan.set_ref_distance(0);
 	scan.set_isInitialized(true);
 	scan.set_isDetecting(false);
 	scan.set_place_distance(0);
+	
 	clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
+	
 	RCLCPP_INFO(this->get_logger(), "parkingspace_detection node READY");
 	RCLCPP_INFO(this->get_logger(), "Initialization...");
+	
 	m_length = 0.0;
 	m_depth = 0.0;
 }
