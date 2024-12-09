@@ -44,6 +44,7 @@ private:
 	void detect_parking_space(const sensor_msgs::msg::LaserScan::SharedPtr msg);
 	void increment_parking_space_length(const interfaces::msg::MotorsFeedback::SharedPtr msg);
 	void parking_place_info();
+
 };
 
 #endif // PARKINGSPACE_HPP

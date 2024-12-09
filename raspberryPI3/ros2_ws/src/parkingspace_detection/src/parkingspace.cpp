@@ -21,14 +21,17 @@ ParkingSpace::ParkingSpace() : Node("parking_space"), detected_parking_type_(Par
 	clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
 	
 	RCLCPP_INFO(this->get_logger(), "parkingspace_detection node READY");
-	RCLCPP_INFO(this->get_logger(), "Initialization...");
 	
 	m_length = 0.0;
 	m_depth = 0.0;
+	
+	RCLCPP_DEBUG(this->get_logger(), "Initialization...");
 }
 
 void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::SharedPtr msg) 
 {
+	RCLCPP_DEBUG(this->get_logger(), "In callback");
+	
 	std::lock(scan_mutex_, length_mutex_);
 	std::lock_guard<std::mutex> scan_lock(scan_mutex_, std::adopt_lock); 
     std::lock_guard<std::mutex> length_lock(length_mutex_, std::adopt_lock); 
@@ -44,6 +47,8 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 	scan.set_intensities(msg->intensities.data());
 	bool hasDetected = false;
 
+	RCLCPP_DEBUG(this->get_logger(), "Receiving value from callback");
+
 	if (scan.get_isInitialized()){
 
 		if (scan.get_init_compteur()<LIMIT_INIT){
@@ -51,55 +56,59 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 			if(!isinf(scan.get_range_at(0))){
 				scan.set_ref_distance_init(scan.get_range_at(0));
 				scan.set_init_compteur(1);
+				RCLCPP_DEBUG(this->get_logger(), "Increasing compteur");
 			}
 		}
 		else{
 			scan.set_ref_distance(scan.get_ref_distance_init()/LIMIT_INIT);
-			RCLCPP_INFO(this->get_logger(), "Done !!!!");
 			RCLCPP_INFO(this->get_logger(), "Distance of reference set to : %f",scan.get_ref_distance());
 			scan.set_isInitialized(false);
 		}
 	}
 	else {
-		
-		if (!isinf(scan.get_range_at(0))){
 
-			if ((scan.get_range_at(0) >= scan.get_ref_distance() + LENGHT_CAR) && !scan.get_isDetecting()){ // If the distance detected is above or equal to the reference distance plus the lenght of the car
-				
-				RCLCPP_INFO(this->get_logger(), "Beginning of a potential place");
-				scan.set_place_distance(scan.get_range_at(0));
-				m_length = 0.0;
-				m_depth = 0.0;
-				scan.set_isDetecting(true); // We set detected to true as we might have detected a place
-			}
-		
-			else if (scan.get_isDetecting() && ((scan.get_range_at(0) >= (scan.get_ref_distance() - LIMIT_DISTANCE)) && (scan.get_range_at(0) <= (scan.get_ref_distance() + LIMIT_DISTANCE)))){ // If we already might have detected a place and we have a distance back in the limit around our ref distance then we might have the end of the place
-				
-				RCLCPP_INFO(this->get_logger(), "I might have detected a parking space");
-				scan.set_isDetecting(false); // We set back the detected to false for new detetction
-				hasDetected = true; 
-			}
-		}
-		else{
-
+		if ((scan.get_range_at(0) >= scan.get_ref_distance() + LENGHT_CAR) && !scan.get_isDetecting()){ // If the distance detected is above or equal to the reference distance plus the lenght of the car
+			
+			RCLCPP_DEBUG(this->get_logger(), "Beginning of a potential space");
+			scan.set_place_distance(scan.get_range_at(0));
+			m_length = 0.0;
+			m_depth = 0.0;
+			scan.set_isDetecting(true); // We set detected to true as we might have detected a place
+		}	
+		else if (scan.get_isDetecting() && ((scan.get_range_at(0) >= (scan.get_ref_distance() - LIMIT_DISTANCE)) && (scan.get_range_at(0) <= (scan.get_ref_distance() + LIMIT_DISTANCE)))){ // If we already might have detected a place and we have a distance back in the limit around our ref distance then we might have the end of the place
+			
+			RCLCPP_DEBUG(this->get_logger(), "End of a potential space");
+			scan.set_isDetecting(false); // We set back the detected to false for new detetction
+			hasDetected = true; 
 		}
 
-	 if (hasDetected) {
-        m_depth = (scan.get_place_distance() - scan.get_ref_distance()) * 100;
+		if (hasDetected) {
+       		m_depth = (scan.get_place_distance() - scan.get_ref_distance()) * 100;
 
-        if (m_length >= PARKING_SPACE_LIMIT_STRAIGHT_LENGTH && m_depth >= PARKING_SPACE_LIMIT_STRAIGHT_DEPTH) {
-            detected_parking_type_ = ParkingType::PERPENDICULAR;
-            RCLCPP_INFO(this->get_logger(), "Perpendicular parking space detected");
-			RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
-        } else if (m_length >= PARKING_SPACE_LIMIT_PARALLEL_LENGTH && m_depth >= PARKING_SPACE_LIMIT_PARALLEL_DEPTH) {
-            detected_parking_type_ = ParkingType::PARALLEL;
-            RCLCPP_INFO(this->get_logger(), "Parallel parking space detected");
-			RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
-        } else {
-            detected_parking_type_ = ParkingType::NONE;
-            RCLCPP_INFO(this->get_logger(), "Not a valid parking space");
-        }
-    }
+			if (m_length >= PARKING_SPACE_LIMIT_STRAIGHT_LENGTH && m_depth >= PARKING_SPACE_LIMIT_STRAIGHT_DEPTH) {
+				detected_parking_type_ = ParkingType::PERPENDICULAR;
+				RCLCPP_INFO(this->get_logger(), "Perpendicular parking space detected");
+				if (!isinf(m_depth)){
+					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: inf", m_length);
+				}
+				else{
+					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
+				}
+				
+			} else if (m_length >= PARKING_SPACE_LIMIT_PARALLEL_LENGTH && m_depth >= PARKING_SPACE_LIMIT_PARALLEL_DEPTH) {
+				detected_parking_type_ = ParkingType::PARALLEL;
+				RCLCPP_INFO(this->get_logger(), "Parallel parking space detected");
+				if (!isinf(m_depth)){
+					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: inf", m_length);
+				}
+				else{
+					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
+				}
+			} else {
+				detected_parking_type_ = ParkingType::NONE;
+				RCLCPP_INFO(this->get_logger(), "Not a valid parking space");
+			}
+    	}
 	
 	}
 	
@@ -116,7 +125,7 @@ void ParkingSpace::increment_parking_space_length(const interfaces::msg::MotorsF
 	{
 		float tmp = msg->left_rear_odometry*WHEEL_DIAMETER*M_PI/PULSE_FOR_A_REVOLUTION;
 		m_length += tmp;
-		RCLCPP_INFO(this->get_logger(), "Added %f", tmp);
+		RCLCPP_DEBUG(this->get_logger(), "Added %f", tmp);
 	}
 }
 
