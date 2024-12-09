@@ -70,17 +70,27 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 		if ((scan.get_range_at(0) >= scan.get_ref_distance() + LENGHT_CAR) && !scan.get_isDetecting()){ // If the distance detected is above or equal to the reference distance plus the lenght of the car
 			
 			RCLCPP_DEBUG(this->get_logger(), "Beginning of a potential space");
-			scan.set_place_distance(scan.get_range_at(0));
+			if (isinf(scan.get_range_at(0))){
+				scan.set_place_distance(12.0);
+			}
+			else{
+				scan.set_place_distance(scan.get_range_at(0));
+			}
 			m_length = 0.0;
 			m_depth = 0.0;
 			scan.set_isDetecting(true); // We set detected to true as we might have detected a place
 		}	
 		else if (scan.get_isDetecting() && ((scan.get_range_at(0) >= (scan.get_ref_distance() - LIMIT_DISTANCE)) && (scan.get_range_at(0) <= (scan.get_ref_distance() + LIMIT_DISTANCE)))){ // If we already might have detected a place and we have a distance back in the limit around our ref distance then we might have the end of the place
-			
 			RCLCPP_DEBUG(this->get_logger(), "End of a potential space");
 			scan.set_isDetecting(false); // We set back the detected to false for new detetction
 			hasDetected = true; 
 		}
+		else if (scan.get_place_distance()==12.0 && scan.get_isDetecting()){
+			if (!(isinf(scan.get_range_at(0)))){
+				scan.set_place_distance(scan.get_range_at(0));
+			}
+		}
+
 
 		if (hasDetected) {
        		m_depth = (scan.get_place_distance() - scan.get_ref_distance()) * 100;
@@ -88,22 +98,13 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 			if (m_length >= PARKING_SPACE_LIMIT_STRAIGHT_LENGTH && m_depth >= PARKING_SPACE_LIMIT_STRAIGHT_DEPTH) {
 				detected_parking_type_ = ParkingType::PERPENDICULAR;
 				RCLCPP_INFO(this->get_logger(), "Perpendicular parking space detected");
-				if (!isinf(m_depth)){
-					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: inf", m_length);
-				}
-				else{
-					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
-				}
+				RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
 				
 			} else if (m_length >= PARKING_SPACE_LIMIT_PARALLEL_LENGTH && m_depth >= PARKING_SPACE_LIMIT_PARALLEL_DEPTH) {
 				detected_parking_type_ = ParkingType::PARALLEL;
 				RCLCPP_INFO(this->get_logger(), "Parallel parking space detected");
-				if (!isinf(m_depth)){
-					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: inf", m_length);
-				}
-				else{
-					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
-				}
+				RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
+
 			} else {
 				detected_parking_type_ = ParkingType::NONE;
 				RCLCPP_INFO(this->get_logger(), "Not a valid parking space");
