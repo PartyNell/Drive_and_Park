@@ -2,7 +2,7 @@
 
 ObstacleDetection::ObstacleDetection() 
     : Node("obstacle_detection"), will_send_speed_(false), speed_value_front(SpeedCoefficient::NORMAL), 
-        speed_value_back(SpeedCoefficient::NORMAL), parkmod_(false)
+        speed_value_back(SpeedCoefficient::NORMAL), parkmod_(true)
 {
     // Create a subscription to the "/us_data" topic
     subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>(
@@ -13,6 +13,14 @@ ObstacleDetection::ObstacleDetection()
     timer_ = this->create_wall_timer(50ms, std::bind(&ObstacleDetection::timer_callback, this));
 
     RCLCPP_INFO(this->get_logger(), "obstacle_detection node READY");
+
+    //////////////////////////////////////////////////////////////////////
+    subscription_lidar_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+            "/scan",  // Nom du topic
+            10,       // QoS
+            std::bind(
+                &ObstacleDetection::laserScanCallback, this, std::placeholders::_1));
+    //////////////////////////////////////////////////////////////////
 }
 
 void ObstacleDetection::timer_callback()
@@ -28,7 +36,8 @@ void ObstacleDetection::timer_callback()
     }
 }
 
-void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
+void ObstacleDetection::update_speed_info(
+    bool is_front, int16_t sensor_value)
 {
     std::string orientation = is_front ? "[FRONT]" : "[BACK]";
   
@@ -139,6 +148,25 @@ void ObstacleDetection::topic_callback(const interfaces::msg::Ultrasonic::Shared
     update_speed_info(true, front_center);
     update_speed_info(false, rear_center);
 }
+
+///////////////////////////////////
+void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
+{
+    
+    RCLCPP_INFO(this->get_logger(), "In callback");
+
+        for (size_t i = 0; i < msg->ranges.size(); ++i)
+        {
+            const auto &range = msg->ranges[i];
+
+            if (range <= 0.3 && !std::isinf(range) && !std::isnan(range))
+            {
+                RCLCPP_WARN(this->get_logger(), "Range[%zu] is valid and less than 30 cm: %f", i, range);
+            }
+        }
+}
+///////////////////////////////////
+
 
 int main(int argc, char *argv[])
 {
