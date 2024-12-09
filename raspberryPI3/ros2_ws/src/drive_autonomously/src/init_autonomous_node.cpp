@@ -31,8 +31,7 @@ public:
         subscription_ultrasonic_ = this->create_subscription<interfaces::msg::Ultrasonic>("/us_data", 10, std::bind(&init_autonomous::compute_angle, this, _1));
 
         timer_ = this->create_wall_timer(100ms, std::bind(&init_autonomous::timer_callback, this));
-        clock_ = std::make_shared<rclcpp::Clock>(RCL_SYSTEM_TIME);
-        previous_time = clock_->now().seconds();
+        clock_ = rclcpp::Clock(RCL_SYSTEM_TIME);
 
         RCLCPP_INFO(this->get_logger(), "init_autonomous_node READY");
     }
@@ -41,13 +40,13 @@ private:
     void timer_callback()
     {
         if(init_state){
-            float steer = (2*R_MIN*angle_to_perform)/(throttle_order*CAR_SPEED*T0);
-            if(steer < -1.0){
-                steer_order = -1.0;
-            } else if(steer > 1.0){
+
+            if(angle_to_perform > 0.25){
                 steer_order = 1.0;
+            } else if (angle_to_perform < -0.25){
+                steer_order = -1.0;
             } else {
-                steer_order = steer;
+                steer_order = 64*pow(angle_to_perform, 3);
             }
 
             RCLCPP_INFO(this->get_logger(), "STEER ORDER : %f", steer_order);
@@ -61,7 +60,12 @@ private:
             
             publisher_car_order_->publish(car_order);
 
-            if(abs(steer_order) < 0.05){
+            current_time = clock_.now();
+
+            init_time = current_time - reference_time;
+            RCLCPP_INFO(this->get_logger(), "INIT TIME : %f", init_time.seconds());
+
+            if(abs(angle_to_perform) < 0.08){
                 ++validation_counter;
                 if(validation_counter == 5) {
                     std_msgs::msg::Bool finished;
@@ -71,6 +75,13 @@ private:
                     validation_counter = 0;
                     init_state = false;
                 }
+            } else if (init_time.seconds() > 10.0){
+                std_msgs::msg::Bool finished;
+                finished.data = false;
+                publisher_init_finished_->publish(finished);
+
+                validation_counter = 0;
+                init_state = false;
             } else {
                 validation_counter = 0;
             }
@@ -78,8 +89,12 @@ private:
     }
 
     void start_init_order(const std_msgs::msg::Bool & i){
-        RCLCPP_INFO(this->get_logger(), "START Initialisation");
         init_state = i.data;
+
+        if(init_state){
+            RCLCPP_INFO(this->get_logger(), "START Initialisation");
+            reference_time = clock_.now();
+        }
     }  
 
     void compute_angle(const interfaces::msg::Ultrasonic & us) {
@@ -87,60 +102,10 @@ private:
         RCLCPP_INFO(this->get_logger(), "ULTRASONIC : front= %d, back=%d", us.front_right, us.rear_right);
 
         if(us.front_right <= 200 && us.rear_right <= 200){
-            tmp_angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
-
-            //compute the maximum angle that could be performed : robustness for the holes between the cars
-            actual_time = rclcpp::Clock().now().seconds();
-            delta_time = actual_time - previous_time;
-
-            maximal_angle_perform = (steer_order*throttle_order*CAR_SPEED)/(2*R_MIN);
-
-            //save the angle to perform saturate by the capacities of the car
-            if(abs(angle_to_perform - tmp_angle_to_perform) <= maximal_angle_perform){
-                angle_to_perform = tmp_angle_to_perform;
-            } 
-            else {
-                angle_to_perform = maximal_angle_perform * copysign(1.0, tmp_angle_to_perform);
-            }
-
-            RCLCPP_INFO(this->get_logger(), "ANGLE TO PERFORM : %f", angle_to_perform);
-
-            previous_time = actual_time;
-            
-        } else if (init_state && (us.front_right > 200 || us.rear_right > 200)) {
-            //the wall or the parked car are too far to compute the angle
-            init_state = false;
-
-            std_msgs::msg::Bool finished;
-            finished.data = false;
-            publisher_init_finished_->publish(finished);
-        }
-    }
-
-    void compute_angle(const interfaces::msg::Ultrasonic & us) {
-        //compute the angle between the initial position of the car and the aligned position
-        RCLCPP_INFO(this->get_logger(), "ULTRASONIC : front= %d, back=%d", us.front_right, us.rear_right);
-
-        if(us.front_right <= 200 && us.rear_right <= 200){
-            tmp_angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
-
-            //compute the maximum angle that could be performed : robustness for the holes between the cars
-            //actual_time = clock_->now().seconds();
-            delta_time = actual_time - previous_time;
-
-            maximal_angle_perform = (steer_order*throttle_order*CAR_SPEED*delta_time)/(2*R_MIN);
-
-            if(abs(angle_to_perform - tmp_angle_to_perform) <= maximal_angle_perform){
-                angle_to_perform = tmp_angle_to_perform;
-            } 
-            else {
-                angle_to_perform = maximal_angle_perform * copysign(1.0, tmp_angle_to_perform);
-            }
 
             angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
-            RCLCPP_INFO(this->get_logger(), "ANGLE TO PERFORM : %f", angle_to_perform);
 
-            previous_time = actual_time;
+            RCLCPP_INFO(this->get_logger(), "ANGLE TO PERFORM : %f", angle_to_perform);
             
         } else if (init_state && (us.front_right > 200 || us.rear_right > 200)) {
             //the wall or the parked car are too far to compute the angle
@@ -156,16 +121,17 @@ private:
     // Private variables
 
     float steer_order; // angle sent to the node `car_control_node`
-    float throttle_order = 0.7; // throttle sent to the node `car_control_node`
+    float throttle_order = 0.4; // throttle sent to the node `car_control_node`
     bool init_state = false;
 
     int validation_counter = 0;
 
     float angle_to_perform;
 
-    rclcpp::Clock::SharedPtr clock_;
-    float previous_time;
-    float actual_time;
+    rclcpp::Clock clock_;
+    rclcpp::Time reference_time;
+    rclcpp::Time current_time;
+    rclcpp::Duration init_time  = rclcpp::Duration::from_seconds(0);
 
 
     // Publisher
