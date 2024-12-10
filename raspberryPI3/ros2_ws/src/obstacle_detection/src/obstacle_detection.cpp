@@ -1,8 +1,12 @@
 #include "obstacle_detection.hpp"
 
 ObstacleDetection::ObstacleDetection() 
-    : Node("obstacle_detection"), will_send_speed_(false), speed_value_front(SpeedCoefficient::NORMAL), 
-        speed_value_back(SpeedCoefficient::NORMAL), parkmod_(true), is_laser_margin_reach_(false);
+    : Node("obstacle_detection"), 
+        will_send_speed_(false), 
+        speed_value_front(SpeedCoefficient::NORMAL), 
+        speed_value_back(SpeedCoefficient::NORMAL), 
+        parkmod_(true), 
+        is_laser_margin_reach_(false)
 {
     // Create a subscription to the "/us_data" topic
     subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>(
@@ -59,7 +63,7 @@ void ObstacleDetection::update_speed_info(
                 speed_value_front = SpeedCoefficient::STOP; 
             }
 
-            elseif (is_front == false) {
+            else if (is_front == false) {
                 if (speed_value_back != SpeedCoefficient::STOP){
                     RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK u !!!", orientation.c_str());
                 }
@@ -68,6 +72,7 @@ void ObstacleDetection::update_speed_info(
         }
         else if (get_is_laser_margin_reach() == true)
         {
+            RCLCPP_WARN(this->get_logger(), "in");
             if (speed_value_back != SpeedCoefficient::STOP){
                     RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK l !!!", orientation.c_str());
                 }
@@ -164,14 +169,14 @@ void ObstacleDetection::topic_callback(const interfaces::msg::Ultrasonic::Shared
 */
 void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-    if ()
     RCLCPP_INFO(this->get_logger(), "In callback");
-    RCLCPP_INFO(msg->ranges.size(), "points");  // scan number points
+//   RCLCPP_INFO(this->get_logger(), "LaserScan has %zu points", msg->ranges.size()); //  scan number points = 360
         for (size_t i = 0; i < msg->ranges.size(); ++i)
         {
             const auto &range = msg->ranges[i];
 
-            if (range <= LASER_THRESHOLD_PARK_STOP / 100 && !std::isinf(range) && !std::isnan(range)) // !meter conversion for the margin!
+            if (range <= 0.3 && 
+                !std::isinf(range) && !std::isnan(range)) // !meter conversion for the margin!
             {
                 RCLCPP_WARN(this->get_logger(), "Range[%zu] is valid and less than 30 cm: %f", i, range);
                 set_is_laser_margin_reach(true);
