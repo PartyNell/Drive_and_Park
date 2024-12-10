@@ -15,6 +15,7 @@
 
 //////////////////////////////
 #define THRESHOLD_PARK_STOP 15
+#define LASER_THRESHOLD_PARK_STOP 30
 //////////////////////////////
 
 using namespace std::chrono_literals;
@@ -26,6 +27,8 @@ public:
 //////////////////////////////////////////////////////    
     bool get_parkmod() const { return parkmod_; }
     void set_parkmod(bool value) { parkmod_ = value; }
+    bool get_is_laser_margin_reach() const { return is_laser_margin_reach_; }
+    void set_is_laser_margin_reach(bool value) { is_laser_margin_reach_ = value; }
 //////////////////////////////////////////////////////
 
 private:
@@ -40,6 +43,7 @@ private:
 
     ////////////////////////////////////////////////////////
     bool parkmod_;
+    bool is_laser_margin_reach_;
     ////////////////////////////////////////////////////////
 
     class SpeedCoefficient {
