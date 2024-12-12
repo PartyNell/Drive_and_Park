@@ -37,6 +37,7 @@ AutoParking::AutoParking()
 
 void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg)
 {
+    RCLCPP_INFO(this->get_logger(), "Updating...");
     float odometry = msg->left_rear_odometry;
     m_current_distance += odometry;
 
@@ -45,7 +46,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
     {
     case ParkingState::IDLE:
         if (start)
-        {
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_15CM");
             m_state = ParkingState::FORWARD_15CM;
             waiting = false;
         }
@@ -59,7 +61,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             car_move();
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
-        {
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_TO_45DEG_STEER_RIGHT");
             m_state = ParkingState::REVERSE_TO_45DEG_STEER_RIGHT;
             waiting = false;
         }
@@ -73,7 +76,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             car_move(true, 1.0);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
-        {
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_60CM_STEER_LEFT_50");
             m_state = ParkingState::FORWARD_60CM_STEER_LEFT_50;
             waiting = false;
         }
@@ -87,7 +91,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             car_move(false, -0.5);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
-        {
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_80CM_STEER_RIGHT_100");
             m_state = ParkingState::REVERSE_80CM_STEER_RIGHT_100;
             waiting = false;
         }
@@ -101,7 +106,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             car_move(true, 1.0);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
-        {
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS");
             m_state = ParkingState::STRAIGHTEN_WHEELS;
             waiting = false;
         }
@@ -115,7 +121,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             car_move(false, 0.0, 0.0);
         }
         else if(waiting)
-        {
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FINAL_REVERSE_80CM");
             m_state = ParkingState::FINAL_REVERSE_80CM;
             waiting = false;
         }
@@ -129,7 +136,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             car_move(true);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
-        {
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> IDLE");
             m_state = ParkingState::IDLE;
             waiting = false;
         }
