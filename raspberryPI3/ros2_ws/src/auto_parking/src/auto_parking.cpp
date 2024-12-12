@@ -1,5 +1,6 @@
 #include "auto_parking.hpp"
 
+using namespace std::chrono_literals;
 
 
 /*
@@ -18,35 +19,34 @@
 AutoParking::AutoParking() 
     : Node("auto_parking")
 {
-    publishing = false;
+    m_publishing = false;
     start = true;
     waiting = false;
-    current_distance = 0.0;
-    state = ParkingState::IDLE;
-    current_distance_limit = ParkingDistances[static_cast<int>(current_state)];
+    m_current_distance = 0.0;
+    m_state = ParkingState::IDLE;
+    m_current_distance_limit = ParkingDistances[static_cast<int>(m_state)];
     
     // Create a subscription to the "/us_data" topic
     motors_feedback_subscription_ = this->create_subscription<interfaces::msg::MotorsFeedback>(
         "/motors_feedback", 10, std::bind(&AutoParking::update_state, this, std::placeholders::_1));
     
     publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_car_order", 10);    
-    
-    timer_ = this->create_wall_timer(50ms, std::bind(&AutonomousDriving::timer_callback, this));
+    timer_ = this->create_wall_timer(50ms, std::bind(&AutoParking::timer_callback, this));
     RCLCPP_INFO(this->get_logger(), "auto_parking node READY");
 }
 
 void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg)
 {
     float odometry = msg->left_rear_odometry;
-    current_distance += odometry;
+    m_current_distance += odometry;
 
     // update state
-    switch (state)
+    switch (m_state)
     {
     case ParkingState::IDLE:
         if (start)
         {
-            state = ParkingState::FORWARD_15CM;
+            m_state = ParkingState::FORWARD_15CM;
             waiting = false;
         }
         break;
@@ -55,12 +55,12 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         if (!waiting)
         {
             waiting = true;
-            current_distance = 0.0;
+            m_current_distance = 0.0;
             car_move();
         }
-        else if(waiting && current_distance >= current_distance_limit)
+        else if(waiting && m_current_distance >= m_current_distance_limit)
         {
-            state = ParkingState::REVERSE_TO_45DEG_STEER_RIGHT;
+            m_state = ParkingState::REVERSE_TO_45DEG_STEER_RIGHT;
             waiting = false;
         }
         break;
@@ -69,12 +69,12 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         if (!waiting)
         {
             waiting = true;
-            current_distance = 0.0;
+            m_current_distance = 0.0;
             car_move(true, 1.0);
         }
-        else if(waiting && current_distance >= current_distance_limit)
+        else if(waiting && m_current_distance >= m_current_distance_limit)
         {
-            state = ParkingState::FORWARD_60CM_STEER_LEFT_50;
+            m_state = ParkingState::FORWARD_60CM_STEER_LEFT_50;
             waiting = false;
         }
         break;
@@ -83,12 +83,12 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         if (!waiting)
         {
             waiting = true;
-            current_distance = 0.0;
+            m_current_distance = 0.0;
             car_move(false, -0.5);
         }
-        else if(waiting && current_distance >= current_distance_limit)
+        else if(waiting && m_current_distance >= m_current_distance_limit)
         {
-            state = ParkingState::REVERSE_80CM_STEER_RIGHT_100;
+            m_state = ParkingState::REVERSE_80CM_STEER_RIGHT_100;
             waiting = false;
         }
         break;
@@ -97,12 +97,12 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         if (!waiting)
         {
             waiting = true;
-            current_distance = 0.0;
+            m_current_distance = 0.0;
             car_move(true, 1.0);
         }
-        else if(waiting && current_distance >= current_distance_limit)
+        else if(waiting && m_current_distance >= m_current_distance_limit)
         {
-            state = ParkingState::STRAIGHTEN_WHEELS;
+            m_state = ParkingState::STRAIGHTEN_WHEELS;
             waiting = false;
         }
         break;
@@ -111,12 +111,12 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         if (!waiting)
         {
             waiting = true;
-            current_distance = 0.0;
+            m_current_distance = 0.0;
             car_move(false, 0.0, 0.0);
         }
         else if(waiting)
         {
-            state = ParkingState::FINAL_REVERSE_80CM;
+            m_state = ParkingState::FINAL_REVERSE_80CM;
             waiting = false;
         }
         break;
@@ -125,12 +125,12 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         if (!waiting)
         {
             waiting = true;
-            current_distance = 0.0;
+            m_current_distance = 0.0;
             car_move(true);
         }
-        else if(waiting && current_distance >= current_distance_limit)
+        else if(waiting && m_current_distance >= m_current_distance_limit)
         {
-            state = ParkingState::IDLE;
+            m_state = ParkingState::IDLE;
             waiting = false;
         }
         break;
@@ -140,28 +140,28 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         break;
     }
 
-    current_distance_limit = ParkingDistances[static_cast<int>(current_state)];
+    m_current_distance_limit = ParkingDistances[static_cast<int>(m_state)];
 
     // process states
 
 }
 
-void timer_callback()
+void AutoParking::timer_callback()
 {
-    if (publishing)
+    if (m_publishing)
     {
         publisher_car_order_->publish(car_order);
     }
 }
 
-void AutoParking::car_move(bool reverse = false, float steer = 0.0, float speed = 0.3)
+void AutoParking::car_move(bool reverse, float steer, float speed)
 {
     car_order.start = true;
     car_order.mode = 1;
     car_order.throttle = speed;
     car_order.steer = steer;
     car_order.reverse = reverse;
-    publishing = true;
+    m_publishing = true;
 }
 
 void AutoParking::car_stop()
@@ -171,7 +171,7 @@ void AutoParking::car_stop()
     car_order.throttle = 0.0;
     car_order.steer = 0.0;
     car_order.reverse = false;
-    publishing = true;
+    m_publishing = true;
 }
 
 int main(int argc, char *argv[])

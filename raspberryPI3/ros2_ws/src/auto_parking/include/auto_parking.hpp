@@ -6,6 +6,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/joystick_order.hpp"
 #include "interfaces/msg/speed_info.hpp"
+#include "interfaces/msg/motors_feedback.hpp"
 
 class AutoParking : public rclcpp::Node
 {
@@ -25,7 +26,7 @@ private:
         FINAL_REVERSE_80CM  // Reculer de 80 cm (final)
     };
 
-    constexpr double ParkingDistances[] = {
+    static constexpr double ParkingDistances[] = {
         0.0,    // IDLE
         15.0,   // FORWARD_15CM
         125.0,  // REVERSE_TO_45DEG_STEER_RIGHT
@@ -41,11 +42,13 @@ private:
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
     rclcpp::TimerBase::SharedPtr timer_;
     interfaces::msg::JoystickOrder car_order;
-    bool publishing, start, waiting;
+    bool m_publishing, start, waiting;
+    void update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg);
+    void timer_callback();
     void car_move(bool reverse = false, float steer = 0.0, float speed = 0.3);
     void car_stop();
-    ParkingState state;
-    float current_distance, current_distance_limit;
+    ParkingState m_state;
+    float m_current_distance, m_current_distance_limit;
 };
 
 #endif // AUTO_PARKING_HPP
