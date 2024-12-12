@@ -1,8 +1,12 @@
 #include "obstacle_detection.hpp"
 
 ObstacleDetection::ObstacleDetection() 
-    : Node("obstacle_detection"), will_send_speed_(false), speed_value_front(SpeedCoefficient::NORMAL), 
-        speed_value_back(SpeedCoefficient::NORMAL), parkmod_(false)
+    : Node("obstacle_detection"), 
+        will_send_speed_(false), 
+        speed_value_front(SpeedCoefficient::NORMAL), 
+        speed_value_back(SpeedCoefficient::NORMAL), 
+        parkmod_(true), 
+        is_laser_margin_reach_(false)
 {
     // Create a subscription to the "/us_data" topic
     subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>(
@@ -13,6 +17,14 @@ ObstacleDetection::ObstacleDetection()
     timer_ = this->create_wall_timer(50ms, std::bind(&ObstacleDetection::timer_callback, this));
 
     RCLCPP_INFO(this->get_logger(), "obstacle_detection node READY");
+
+    //////////////////////////////////////////////////////////////////////
+    subscription_lidar_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+            "/scan",  // Nom du topic
+            10,       // QoS
+            std::bind(
+                &ObstacleDetection::laserScanCallback, this, std::placeholders::_1));
+    //////////////////////////////////////////////////////////////////
 }
 
 void ObstacleDetection::timer_callback()
@@ -28,34 +40,49 @@ void ObstacleDetection::timer_callback()
     }
 }
 
-void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
+void ObstacleDetection::update_speed_info(
+    bool is_front, int16_t sensor_value)
 {
     std::string orientation = is_front ? "[FRONT]" : "[BACK]";
   
 ///////////////////////////////////////////////////////////////////////////////////
     /*Park security
-    On the "parkmod", compare ultrasonic sensor with the 15cm margin. 
-    Stop the car if the direction is the same as the sensor detection
+    On the "parkmod", compare ultrasonic sensor with the 15cm margin and 30cm with the lidar. 
+    Stop the car if the direction is the same than the ulstrasonic sensor detection
     */
-    if (get_parkmod() == true && 
-        sensor_value < THRESHOLD_PARK_STOP)
+    if (get_parkmod() == true)
     {
-        will_send_speed_ = true;
+        RCLCPP_DEBUG(this->get_logger(), "is_laser_margin_reach_: %d", is_laser_margin_reach_);
+        if (sensor_value < THRESHOLD_PARK_STOP)
+        {
+            will_send_speed_ = true;
 
-        if (is_front) {
-            if (speed_value_front != SpeedCoefficient::STOP){
-                RCLCPP_WARN(this->get_logger(), "'%s' STOP 15CM !!!", orientation.c_str());
+            if (is_front == true) {
+                if (speed_value_front != SpeedCoefficient::STOP) {
+                    RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK u !!!", orientation.c_str());
+                }
+                speed_value_front = SpeedCoefficient::STOP; 
             }
-            speed_value_front = SpeedCoefficient::STOP; 
+            else if (is_front == false) {
+                if (speed_value_back != SpeedCoefficient::STOP) {
+                    RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK u !!!", orientation.c_str());
+                }
+                speed_value_back = SpeedCoefficient::STOP; 
+            }
         }
+        else if (is_laser_margin_reach_ == true) // Condition modifiée ici
+        {
+            will_send_speed_ = true;
 
-        else {
-            if (speed_value_back != SpeedCoefficient::STOP){
-                RCLCPP_WARN(this->get_logger(), "'%s' STOP 15CM !!!", orientation.c_str());
+            if (is_front == false) { // Supposons ici que c'est l'arrière qui est concerné par le lidar
+                if (speed_value_back != SpeedCoefficient::STOP) {
+                    RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK l !!!", orientation.c_str());
+                }
+                speed_value_back = SpeedCoefficient::STOP; 
             }
-            speed_value_back = SpeedCoefficient::STOP; 
         }
-    } 
+    }
+
 ////////////////////////////////////////////////////////////////////////////////
      
     if (get_parkmod() == false &&
@@ -139,6 +166,41 @@ void ObstacleDetection::topic_callback(const interfaces::msg::Ultrasonic::Shared
     update_speed_info(true, front_center);
     update_speed_info(false, rear_center);
 }
+
+/////////////Set the lidar detection//////////////////////
+/* 
+*/
+void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
+{
+    bool margin_reached = false;
+
+    for (size_t i = 180; i < 360 ; ++i)
+    {
+        const auto &range = msg->ranges[i];
+
+        if (range <= 0.3 && 
+            !std::isinf(range) && !std::isnan(range))
+        {
+            margin_reached = true;
+            break;
+        }
+    }
+
+    if (margin_reached)
+    {
+        if (!is_laser_margin_reach_)
+        {
+            RCLCPP_WARN(this->get_logger(), "Lidar margin reached!");
+        }
+        is_laser_margin_reach_ = true;
+    }
+    else
+    {
+        is_laser_margin_reach_ = false;
+    }
+}
+///////////////////////////////////
+
 
 int main(int argc, char *argv[])
 {
