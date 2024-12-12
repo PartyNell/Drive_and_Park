@@ -27,6 +27,8 @@ public:
 //////////////////////////////////////////////////////    
     bool get_parkmod() const { return parkmod_; }
     void set_parkmod(bool value) { parkmod_ = value; }
+    bool get_is_laser_margin_reach() const { return is_laser_margin_reach_; }
+    void set_is_laser_margin_reach(bool value) { is_laser_margin_reach_ = value; }
 //////////////////////////////////////////////////////
 
 private:
