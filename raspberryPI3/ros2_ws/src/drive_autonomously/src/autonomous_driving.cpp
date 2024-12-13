@@ -10,7 +10,7 @@
 
 #define PULSE_FOR_A_REVOLUTION 36
 #define WHEEL_DIAMETER 20.0
-#define MAX_DISTANCE 2.0
+#define MAX_DISTANCE 1.0
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -85,13 +85,12 @@ class AutonomousDriving : public rclcpp::Node
 
 	void computeDistance(const interfaces::msg::MotorsFeedback & motorsFeedback)
 	{
-		if (init_in_progress || search_in_progress)
+		if (search_in_progress)
 		{
 			
-      distance_to_add = msg->left_rear_odometry*WHEEL_DIAMETER*M_PI/PULSE_FOR_A_REVOLUTION;
-		  m_length += tmp;
+      distance_to_add = motorsFeedback.left_rear_odometry*WHEEL_DIAMETER*M_PI/PULSE_FOR_A_REVOLUTION;
 			// Compute the distance travelled from the beginning
-      distance_travelled += 0.1; 
+      distance_travelled += distance_to_add; 
 
 			// If the distance travelled has reached the maximum distance required,
 			if (distance_travelled >= MAX_DISTANCE)
