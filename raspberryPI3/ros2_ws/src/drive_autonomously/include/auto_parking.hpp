@@ -7,6 +7,9 @@
 #include "interfaces/msg/joystick_order.hpp"
 #include "interfaces/msg/speed_info.hpp"
 #include "interfaces/msg/motors_feedback.hpp"
+#include "std_msgs/msg/bool.hpp"
+
+using std::placeholders::_1;
 
 class AutoParking : public rclcpp::Node
 {
@@ -38,11 +41,15 @@ private:
 
 
 
-    rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr motors_feedback_subscription_;
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_parking_finished_;
+    
+    rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr motors_feedback_subscription_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_start_parking_;
     rclcpp::TimerBase::SharedPtr timer_;
     interfaces::msg::JoystickOrder car_order;
     bool m_publishing, start, waiting;
+    void init_parking(const std_msgs::msg::Bool & i);
     void update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg);
     void timer_callback();
     void car_move(bool reverse = false, float steer = 0.0, float speed = 0.3);

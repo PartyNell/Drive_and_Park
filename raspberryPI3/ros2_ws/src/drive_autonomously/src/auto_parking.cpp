@@ -26,13 +26,30 @@ AutoParking::AutoParking()
     m_state = ParkingState::IDLE;
     m_current_distance_limit = ParkingDistances[static_cast<int>(m_state)];
     
+    publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_car_order", 10); 
+    publisher_parking_finished_ = this->create_publisher<std_msgs::msg::Bool>("parking_finished", 10);
+
     // Create a subscription to the "/us_data" topic
     motors_feedback_subscription_ = this->create_subscription<interfaces::msg::MotorsFeedback>(
         "/motors_feedback", 10, std::bind(&AutoParking::update_state, this, std::placeholders::_1));
-    
-    publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_car_order", 10);    
+    subscription_start_parking_ = this->create_subscription<std_msgs::msg::Bool>("start_parking", 10, std::bind(&AutoParking::init_parking, this, _1));
+   
     timer_ = this->create_wall_timer(50ms, std::bind(&AutoParking::timer_callback, this));
     RCLCPP_INFO(this->get_logger(), "auto_parking node READY");
+}
+
+void AutoParking::init_parking(const std_msgs::msg::Bool & i)
+{
+    start = i.data;
+
+    if(start){
+        RCLCPP_INFO(this->get_logger(), "START Parking");
+    } else {
+        RCLCPP_INFO(this->get_logger(), "STOP Parking");
+        m_state = ParkingState::IDLE;
+        m_current_distance = 0.0;
+        waiting = false;
+    }
 }
 
 void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg)
@@ -140,6 +157,10 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             RCLCPP_INFO(this->get_logger(), "NEW STATE ===> IDLE");
             m_state = ParkingState::IDLE;
             waiting = false;
+
+            std_msgs::msg::Bool parking_finished;
+            parking_finished.data = true; 
+            publisher_parking_finished_->publish(parking_finished);
         }
         break;
 
