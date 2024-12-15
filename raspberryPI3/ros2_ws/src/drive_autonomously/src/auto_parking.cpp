@@ -54,7 +54,7 @@ void AutoParking::init_parking(const std_msgs::msg::Bool & i)
 
 void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg)
 {
-    RCLCPP_INFO(this->get_logger(), "Updating...");
+    // RCLCPP_INFO(this->get_logger(), "Updating...");
     float odometry = msg->left_rear_odometry;
     m_current_distance += odometry;
 
@@ -154,7 +154,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> IDLE");
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> PARKED");
             m_state = ParkingState::IDLE;
             waiting = false;
 
@@ -164,7 +164,19 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         break;
 
-    
+    case ParkingState::PARKED:
+        if (!waiting)
+        {
+            waiting = true;
+            RCLCPP_INFO(this->get_logger(), "CAR IS PARKED ! ENJOY !");
+            
+        }
+        else if(waiting)
+        {    
+            // wait for any signal to park again
+        }
+        break;
+
     default:
         break;
     }
