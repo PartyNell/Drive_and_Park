@@ -169,7 +169,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             RCLCPP_INFO(this->get_logger(), "CAR IS PARKED ! ENJOY !");
-
+            car_move(false, 0.0, 0.0);
         }
         else if(waiting)
         {    
