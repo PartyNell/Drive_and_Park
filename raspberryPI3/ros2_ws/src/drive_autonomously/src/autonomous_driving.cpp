@@ -5,7 +5,12 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/joystick_order.hpp"
+#include "interfaces/msg/motors_feedback.hpp"
 #include "std_msgs/msg/bool.hpp"
+
+#define PULSE_FOR_A_REVOLUTION 36
+#define WHEEL_DIAMETER 20.0
+#define MAX_DISTANCE 100 //in centimeters
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -37,6 +42,7 @@ class AutonomousDriving : public rclcpp::Node
             init_autonomous.data = true;
             publisher_init_state_->publish(init_autonomous);
 
+            distance_travelled = 0.0;
             init_in_progress = true;
             search_in_progress = false;
         } else if (mode != 1 && init_in_progress){
@@ -76,12 +82,32 @@ class AutonomousDriving : public rclcpp::Node
         }
     }
 
-    void timer_callback()
-    {
-      if(search_in_progress)
-        publisher_car_order_->publish(car_order);
-    }
+    
 
+	void computeDistance(const interfaces::msg::MotorsFeedback & motorsFeedback)
+	{
+		if (search_in_progress && mode == 1)
+		{
+			
+      distance_to_add = motorsFeedback.left_rear_odometry*WHEEL_DIAMETER*M_PI/PULSE_FOR_A_REVOLUTION;
+			// Compute the distance travelled from the beginning
+      distance_travelled += distance_to_add; 
+
+			// If the distance travelled has reached the maximum distance required,
+			if (distance_travelled >= MAX_DISTANCE)
+			{
+				// The speed sent to the control of the car is 0
+				car_order.throttle = 0.0;
+				RCLCPP_INFO(this->get_logger(), "The car has driven %.2f centimeters.", distance_travelled);
+			}
+		}
+	}
+
+  void timer_callback()
+  {
+    if(search_in_progress)
+      publisher_car_order_->publish(car_order);
+  }
     
 
     rclcpp::TimerBase::SharedPtr timer_;
@@ -100,6 +126,8 @@ class AutonomousDriving : public rclcpp::Node
     bool init_in_progress = false;
     bool search_in_progress = false;
     interfaces::msg::JoystickOrder car_order;
+	  float distance_to_add = 0.0; 
+    float distance_travelled = 0.0;
 };
 
 int main(int argc, char * argv[])
