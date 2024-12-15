@@ -24,7 +24,7 @@ private:
         FORWARD_15CM,       // Avancer de 15 cm
         REVERSE_TO_45DEG_STEER_RIGHT,   // Braquer à 100% à droite et Reculer jusqu'à être à 45° (1.25m)
         FORWARD_60CM_STEER_LEFT_50,       //  Braquer à 50% à gauche et Avancer de 60 cm
-        REVERSE_80CM_STEER_RIGHT_100,       // Braquer à 100% à droite et Reculer de 80 cm
+        REVERSE_80CM_STEER_RIGHT_10,       // Braquer à 10% à droite et Reculer de 80 cm
         STRAIGHTEN_WHEELS,  // Mettre les roues droites
         FINAL_REVERSE_80CM,  // Reculer de 80 cm (final)
         PARKED
@@ -35,7 +35,7 @@ private:
         15.0,   // FORWARD_15CM
         125.0,  // REVERSE_TO_45DEG_STEER_RIGHT
         60.0,   // FORWARD_60CM_STEER_LEFT_50
-        80.0,   // REVERSE_80CM_STEER_RIGHT_100
+        80.0,   // REVERSE_80CM_STEER_RIGHT_10
         0.0,    // STRAIGHTEN_WHEELS
         80.0,    // FINAL_REVERSE_80CM
         0.0
