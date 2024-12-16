@@ -107,7 +107,7 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 
 			} else {
 				detected_parking_type_ = ParkingType::NONE;
-				RCLCPP_INFO(this->get_logger(), "Not a valid parking space");
+				RCLCPP_DEBUG(this->get_logger(), "Not a valid parking space");
 			}
     	}
 	
