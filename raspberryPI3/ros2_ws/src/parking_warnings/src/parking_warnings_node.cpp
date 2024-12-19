@@ -4,7 +4,7 @@
 class ParkingWarningNode : public rclcpp::Node {
 public:
     ParkingWarningNode()
-    : Node("parking_warning"), light_state_(false), is_flashing_(true) {
+    : Node("parking_warning_node"), light_state_(false), is_flashing_(true) {
         // Déclarez un publisher pour publier l'état de la lumière
         light_publisher_ = this->create_publisher<std_msgs::msg::Bool>("parking_warning_light", 10);
 
