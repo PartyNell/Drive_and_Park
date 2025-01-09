@@ -10,7 +10,7 @@
 
 #define PULSE_FOR_A_REVOLUTION 36
 #define WHEEL_DIAMETER 20.0
-#define MAX_DISTANCE 100 //in centimeters
+#define MAX_DISTANCE 500 //in centimeters
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -21,12 +21,18 @@ class AutonomousDriving : public rclcpp::Node
     AutonomousDriving()
     : Node("autonomous_driving"), count_(0)
     {
+      //PUBLISHERS
       publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_car_order", 10);
+
+      //STATES publishers
       publisher_init_state_ = this->create_publisher<std_msgs::msg::Bool>("start_init", 10);
 
-      subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::test_distance, this, _1));
-      //subscriber_init_ok_ = this->create_subscription<std_msgs::msg::Bool>("init_finished", 10, std::bind(&AutonomousDriving::start_straight, this, _1));
-	    subscription_motors_feedback_ = this->create_subscription<interfaces::msg::MotorsFeedback>("motors_feedback", 10, std::bind(&AutonomousDriving::computeDistance, this, _1));
+      //SUBSCRIBERS
+      subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::init_autonomous_mode, this, _1));
+      subscription_motors_feedback_ = this->create_subscription<interfaces::msg::MotorsFeedback>("motors_feedback", 10, std::bind(&AutonomousDriving::computeDistance, this, _1));
+
+      //STATES subscribers
+      subscriber_init_ok_ = this->create_subscription<std_msgs::msg::Bool>("init_finished", 10, std::bind(&AutonomousDriving::init_search_state, this, _1));
 
       timer_ = this->create_wall_timer(50ms, std::bind(&AutonomousDriving::timer_callback, this));
 
@@ -34,74 +40,60 @@ class AutonomousDriving : public rclcpp::Node
     }
 
   private:
-//     void init_autonomous_mode(const interfaces::msg::JoystickOrder & joystick){
-//       if(mode != joystick.mode){
-//         mode = joystick.mode;
+    void init_autonomous_mode(const interfaces::msg::JoystickOrder & joystick){
+      /*
+        Initialization of the Autonomous driving mode. Should be executed if the mode switched to Autonomous
+      */
 
-//         if(mode == 1){
-//             //std_msgs::msg::Bool init_autonomous;
-//             //init_autonomous.data = true;
-//             //publisher_init_state_->publish(init_autonomous);
-
-//             init_in_progress = true;
-//             search_in_progress = false;
-//         } else if (mode != 1 && init_in_progress){
-//             std_msgs::msg::Bool init_autonomous;
-//             init_autonomous.data = false; 
-//             publisher_init_state_->publish(init_autonomous);
-
-//             init_in_progress = false;
-//             search_in_progress = false;
-//         }
-//       }
-//     }
-
-//     void start_straight(const std_msgs::msg::Bool & init){
-//         //if(init.data){
-//         //  RCLCPP_INFO(this->get_logger(), "Initialisation DONE");
-
-//           car_order.start = true;
-//           car_order.mode = 1;
-//           car_order.throttle = 0.7;
-//           car_order.steer = 0.0;
-//           car_order.reverse = false;
-
-//           search_in_progress = true;
-
-//         //} else {
-//         //  RCLCPP_INFO(this->get_logger(), "Initialisation FAILED");
-// //
-//         //  //STOP the car
-//         //  car_order.start = true;
-//         //  car_order.mode = 1;
-//         //  car_order.throttle = 0.0;
-//         //  car_order.steer = 0.0;
-//         //  car_order.reverse = false;
-// //
-//         //  search_in_progress = false;
-//         //}
-//     }
-
-    void test_distance(const interfaces::msg::JoystickOrder & joystick){
       if(mode != joystick.mode){
         mode = joystick.mode;
 
         if(mode == 1){
-            //std_msgs::msg::Bool init_autonomous;
-            //init_autonomous.data = true;
-            //publisher_init_state_->publish(init_autonomous);
-            distance_travelled = 0.0;
+            std_msgs::msg::Bool init_autonomous;
+            init_autonomous.data = true;
+            publisher_init_state_->publish(init_autonomous);
 
-            car_order.start = true;
-            car_order.mode = 1;
-            car_order.throttle = 0.7;
-            car_order.steer = 0.0;
-            car_order.reverse = false;
+            init_in_progress = true;
+            search_in_progress = false;
+            stop = false;
+
+        } else if (mode != 1 && init_in_progress){
+            std_msgs::msg::Bool init_autonomous;
+            init_autonomous.data = false; 
+            publisher_init_state_->publish(init_autonomous);
 
             init_in_progress = false;
-            search_in_progress = true;
+            search_in_progress = false;
+            stop = true;
         }
       }
+    }
+
+    void init_search_state(const std_msgs::msg::Bool & init){
+      /*
+        If the execution of the initilization succeed then the car switch to the search state. 3 actions are done at the same time :  
+          - the car should drive straighlty
+          - the car should compute the traveled distance from the beginning of the search state
+          - the car looking for an empty parking space
+      */
+        init_in_progress = false;
+
+        if(init.data){
+          RCLCPP_INFO(this->get_logger(), "Initialisation DONE");
+
+          set_car_order(true, 1, 0.7, 0.0, false);
+          distance_travelled = 0.0;
+
+          search_in_progress = true;
+
+        } else {
+          RCLCPP_INFO(this->get_logger(), "Initialisation FAILED");
+
+          //STOP the car
+          set_car_order(true, 1, 0.0, 0.0, false);
+
+          search_in_progress = false;
+        }
     }
 
 
@@ -109,23 +101,19 @@ class AutonomousDriving : public rclcpp::Node
 	{
 		if (search_in_progress && mode == 1)
 		{
-			
       distance_to_add = motorsFeedback.left_rear_odometry*WHEEL_DIAMETER*M_PI/PULSE_FOR_A_REVOLUTION;
+
 			// Compute the distance travelled from the beginning
       distance_travelled += distance_to_add; 
 
 			// If the distance travelled has reached the maximum distance required,
 			if (distance_travelled >= MAX_DISTANCE)
 			{
-				// The speed sent to the control of the car is 0
-				car_order.throttle = 0.0;
-				RCLCPP_INFO(this->get_logger(), "The car has driven %.2f centimeters.", distance_travelled);
-
-        if (init_in_progress){
-            std_msgs::msg::Bool init_autonomous;
-            init_autonomous.data = false; 
-            publisher_init_state_->publish(init_autonomous);
-            init_in_progress = false; 
+        if(!stop){
+          // The speed sent to the control of the car is 0
+          car_order.throttle = 0.0;
+          RCLCPP_INFO(this->get_logger(), "The car has driven %.2f centimeters.", distance_travelled);
+          stop = true;
         }
 			}
 		}
@@ -137,6 +125,16 @@ class AutonomousDriving : public rclcpp::Node
         publisher_car_order_->publish(car_order);
     }
 
+
+    //TOOLS
+    void set_car_order(bool start, int mode, float throttle, float steer, bool reverse){
+      car_order.start = start;
+      car_order.mode = mode;
+      car_order.throttle = throttle;
+      car_order.steer = steer;
+      car_order.reverse = reverse;
+    }
+
     
 
     rclcpp::TimerBase::SharedPtr timer_;
@@ -146,14 +144,15 @@ class AutonomousDriving : public rclcpp::Node
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_state_;
 
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscriber_autonomous_mode_;
+    rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_init_ok_;
-	  rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     
     //Attributes
     size_t count_;
     int mode = 0;
     bool init_in_progress = false;
     bool search_in_progress = false;
+    bool stop = false;
     interfaces::msg::JoystickOrder car_order;
 
 	  float distance_to_add = 0.0; 
