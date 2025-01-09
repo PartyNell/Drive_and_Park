@@ -7,6 +7,7 @@
 #include "interfaces/msg/joystick_order.hpp"
 #include "interfaces/msg/speed_info.hpp"
 #include "interfaces/msg/motors_feedback.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 
 #define STEER_RIGHT 1.0 

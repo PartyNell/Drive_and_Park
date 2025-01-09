@@ -18,13 +18,13 @@ class AutonomousDriving : public rclcpp::Node
     {
       publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_car_order", 10);
       //publisher_init_state_ = this->create_publisher<std_msgs::msg::Bool>("start_init", 10);
-      publisher_parking_state_ = this->create_publisher<std_msgs::msg::Bool>("start_parking", 10);
+      //publisher_parking_state_ = this->create_publisher<std_msgs::msg::Bool>("start_parking", 10);
       publisher_leaving_state_ = this->create_publisher<std_msgs::msg::Bool>("start_leaving", 10);
 
-      subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::parking, this, _1));
+      //subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::parking, this, _1));
       subscriber_autonomous_mode_leaving_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::leaving, this, _1));
       //subscriber_init_ok_ = this->create_subscription<std_msgs::msg::Bool>("init_finished", 10, std::bind(&AutonomousDriving::start_straight, this, _1));
-      subscriber_parking_ok_ = this->create_subscription<std_msgs::msg::Bool>("parking_finished", 10, std::bind(&AutonomousDriving::wait_order, this, _1));
+      //subscriber_parking_ok_ = this->create_subscription<std_msgs::msg::Bool>("parking_finished", 10, std::bind(&AutonomousDriving::wait_order, this, _1));
       subscriber_leaving_ok_ = this->create_subscription<std_msgs::msg::Bool>("leaving_finished", 10, std::bind(&AutonomousDriving::wait_order_leaving, this, _1));
       timer_ = this->create_wall_timer(50ms, std::bind(&AutonomousDriving::timer_callback, this));
 
@@ -80,6 +80,7 @@ class AutonomousDriving : public rclcpp::Node
     //     }
     // }
 
+    /*
     void parking (const interfaces::msg::JoystickOrder & joystick)
     {
       if(mode != joystick.mode){
@@ -105,6 +106,7 @@ class AutonomousDriving : public rclcpp::Node
         }
       }
     }
+  */
 
     void leaving (const interfaces::msg::JoystickOrder & joystick)
     {
