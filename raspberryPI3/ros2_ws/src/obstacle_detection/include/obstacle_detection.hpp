@@ -31,8 +31,8 @@ private:
     class SpeedCoefficient {
     public:
         static constexpr float STOP = 0.0;
-        static constexpr float WALKING_PACE = 0.25;
-        static constexpr float HALF_SPEED = 0.5;
+        static constexpr float WALKING_PACE = 0.15;
+        static constexpr float HALF_SPEED = 0.4;
         static constexpr float NORMAL = 1.0;
     };
 

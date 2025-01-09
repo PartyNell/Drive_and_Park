@@ -21,7 +21,7 @@ void ObstacleDetection::timer_callback()
         auto message = interfaces::msg::SpeedInfo();
         message.speed_coeff_front = speed_value_front;
         message.speed_coeff_back = speed_value_back;
-        RCLCPP_INFO(this->get_logger(), "Publishing: [back] '%f' - [front] '%f'", message.speed_coeff_back, message.speed_coeff_front);
+        //RCLCPP_INFO(this->get_logger(), "Publishing: [back] '%f' - [front] '%f'", message.speed_coeff_back, message.speed_coeff_front);
         publisher_->publish(message);
         will_send_speed_ = false;
     }
@@ -33,44 +33,62 @@ void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
 
     if (sensor_value < THRESHOLD_STOP)
     {
-        RCLCPP_WARN(this->get_logger(), "'%s' STOP !!!", orientation.c_str());
         will_send_speed_ = true;
-        if (is_front)
+        if (is_front){
+            if (speed_value_front != SpeedCoefficient::STOP)
+                RCLCPP_WARN(this->get_logger(), "'%s' STOP !!!", orientation.c_str());
+
             speed_value_front = SpeedCoefficient::STOP; 
-        else
+        } else {
+            if (speed_value_back != SpeedCoefficient::STOP)
+                RCLCPP_WARN(this->get_logger(), "'%s' STOP !!!", orientation.c_str());
+
             speed_value_back = SpeedCoefficient::STOP; 
+        }
     }
     else if (sensor_value < THRESHOLD_SLOW)
     {
-        RCLCPP_INFO(this->get_logger(), "'%s' SLOW DOWN AGAIN !!!", orientation.c_str());
         will_send_speed_ = true;
-        if (is_front)
+        if (is_front){
+            if (speed_value_front != SpeedCoefficient::WALKING_PACE)
+                RCLCPP_INFO(this->get_logger(), "'%s' SLOW DOWN AGAIN !!!", orientation.c_str());
+
             speed_value_front = SpeedCoefficient::WALKING_PACE; 
-        else
+        } else {
+            if (speed_value_back != SpeedCoefficient::WALKING_PACE)
+                RCLCPP_INFO(this->get_logger(), "'%s' SLOW DOWN AGAIN !!!", orientation.c_str());
+
             speed_value_back = SpeedCoefficient::WALKING_PACE; 
+        }
     }
     else if (sensor_value < THRESHOLD_FIRST_SLOW)
     {
-        RCLCPP_INFO(this->get_logger(), "'%s' SLOW DOWN BOY !!!", orientation.c_str());
         will_send_speed_ = true;
-        if (is_front)
+        if (is_front){
+            if (speed_value_front != SpeedCoefficient::HALF_SPEED)
+                RCLCPP_INFO(this->get_logger(), "'%s' SLOW DOWN BOY !!!", orientation.c_str());
+
             speed_value_front = SpeedCoefficient::HALF_SPEED; 
-        else
+        } else {
+            if (speed_value_back != SpeedCoefficient::HALF_SPEED)
+                RCLCPP_INFO(this->get_logger(), "'%s' SLOW DOWN BOY !!!", orientation.c_str());
+
             speed_value_back = SpeedCoefficient::HALF_SPEED; 
+        }
     }
     else if (sensor_value < THRESHOLD_CAREFUL)
     {
-        RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFUL !!!", orientation.c_str());
+        RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFULL !!!", orientation.c_str());
         will_send_speed_ = true;
-        if (is_front)
+        if (is_front){
             speed_value_front = SpeedCoefficient::NORMAL; 
-        else
+        } else {
             speed_value_back = SpeedCoefficient::NORMAL; 
+        }
     }
     else
     {
         // No warning or message; speed stays NORMAL.
-        RCLCPP_INFO(this->get_logger(), "'%s' OK, EVERYTHING GOOD !!!", orientation.c_str());
         will_send_speed_ = true;
         if (is_front)
             speed_value_front = SpeedCoefficient::NORMAL; 
