@@ -183,6 +183,7 @@ class AutonomousDriving : public rclcpp::Node
     bool init_in_progress = false;
     bool search_in_progress = false;
     bool parking_in_progress = false;
+    bool leaving_in_progress = false;
     interfaces::msg::JoystickOrder car_order;
 };
 
