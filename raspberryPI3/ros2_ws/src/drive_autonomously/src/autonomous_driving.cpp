@@ -36,7 +36,7 @@ class AutonomousDriving : public rclcpp::Node
 
       timer_ = this->create_wall_timer(50ms, std::bind(&AutonomousDriving::timer_callback, this));
 
-      RCLCPP_INFO(this->get_logger(), "autonomous_driving node READY");
+      RCLCPP_INFO(this->get_logger(), "autonomous_driving node READY"); 
     }
 
   private:
