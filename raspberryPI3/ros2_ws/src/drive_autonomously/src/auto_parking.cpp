@@ -268,7 +268,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         else if(waiting)
         {    
             RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FINAL_REVERSE_80CM");
-            m_state = ParkingState::FINAL_REVERSE_80CM;
+            m_state = ParkingState::REVERSE_20CM;
             waiting = false;
         }
         break;
