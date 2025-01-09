@@ -219,7 +219,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(false); // Avancer
+            car_move(false, -1.0); // Avancer
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
@@ -248,7 +248,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(true); // Reculer
+            car_move(true, 1.0); // Reculer
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
@@ -323,7 +323,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(false); // Avancer
+            car_move(false, 1.0); // Avancer
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
