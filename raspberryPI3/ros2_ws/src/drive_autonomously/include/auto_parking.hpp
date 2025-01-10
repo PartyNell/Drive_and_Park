@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <string>
+
 #include "rclcpp/rclcpp.hpp"
 #include "interfaces/msg/joystick_order.hpp"
 #include "interfaces/msg/speed_info.hpp"
@@ -86,14 +87,21 @@ private:
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_start_parking_;
     rclcpp::TimerBase::SharedPtr timer_;
     interfaces::msg::JoystickOrder car_order;
+
+    rclcpp::Clock clock_ = rclcpp::Clock(RCL_SYSTEM_TIME);
+
     bool m_publishing, start, waiting;
     void init_parking(const std_msgs::msg::Bool & i);
     void update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg);
     void timer_callback();
     void car_move(bool reverse = false, float steer = 0.0, float speed = 0.3);
     void car_stop();
+    void delay(); 
+
     ParkingState m_state;
     ParkingType m_parking_type;
+    rclcpp::Duration waiting_delay  = rclcpp::Duration::from_seconds(5);
+
     float m_current_distance, m_current_distance_limit;
 };
 

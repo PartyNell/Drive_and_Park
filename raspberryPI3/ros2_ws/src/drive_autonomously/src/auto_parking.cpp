@@ -204,7 +204,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         if (!waiting)
         {
             waiting = true;
-            car_move(false, -1.0); // Braquer à fond à gauche (stopping = mouvement neutre)
+            car_move(false, -1.0, 0.0); // Braquer à fond à gauche (stopping = mouvement neutre)
+            delay(); 
         }
         else if (waiting)
         {
@@ -233,7 +234,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         if (!waiting)
         {
             waiting = true;
-            car_move(false, 1.0); // Braquer à fond à droite (stopping)
+            car_move(false, 1.0, 0.0); // Braquer à fond à droite (stopping)
+            delay(); 
         }
         else if (waiting)
         {
@@ -374,6 +376,18 @@ void AutoParking::car_stop()
     car_order.steer = 0.0;
     car_order.reverse = false;
     m_publishing = true;
+}
+
+void AutoParking::delay()
+{
+    rclcpp::Time reference_time;
+    rclcpp::Time current_time;
+
+    reference_time = clock_.now();
+    current_time = clock_.now();
+    
+    while ((current_time - reference_time) < waiting_delay)
+        current_time = clock_.now(); 
 }
 
 int main(int argc, char *argv[])
