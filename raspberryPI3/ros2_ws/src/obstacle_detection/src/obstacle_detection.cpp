@@ -52,7 +52,7 @@ void ObstacleDetection::update_speed_info(
     */
     if (get_parkmod() == true)
     {
-        RCLCPP_DEBUG(this->get_logger(), "is_laser_margin_reach_: %d", is_laser_margin_reach_);
+        RCLCPP_DEBUG(this->get_logger(), "parkmod 1 :");
         if (sensor_value < THRESHOLD_PARK_STOP)
         {
             will_send_speed_ = true;
@@ -81,11 +81,20 @@ void ObstacleDetection::update_speed_info(
                 speed_value_back = SpeedCoefficient::STOP; 
             }
         }
+        else
+        {
+                // No warning or message; speed stays NORMAL.
+                will_send_speed_ = true;
+            if (is_front)
+                speed_value_front = SpeedCoefficient::NORMAL; 
+            else
+                speed_value_back = SpeedCoefficient::NORMAL;
+        }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
      
-    if (get_parkmod() == false &&
+    else if (get_parkmod() == false &&
         sensor_value < THRESHOLD_STOP)
     {
         will_send_speed_ = true;
@@ -146,7 +155,7 @@ void ObstacleDetection::update_speed_info(
             speed_value_back = SpeedCoefficient::NORMAL; 
         }
     }
-    else
+    else if (get_parkmod() == false)
     {
         // No warning or message; speed stays NORMAL.
         will_send_speed_ = true;
