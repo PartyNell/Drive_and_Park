@@ -63,7 +63,7 @@ private:
 
             init_time = current_time - reference_time;
 
-            if(abs(angle_to_perform) < 0.02){
+            if(abs(angle_to_perform) < 0.05){
                 ++validation_counter;
                 if(validation_counter == 5) {
                     std_msgs::msg::Bool finished;

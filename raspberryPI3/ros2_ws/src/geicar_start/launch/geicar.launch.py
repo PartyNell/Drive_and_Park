@@ -75,6 +75,12 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    search_parking_node = Node(
+        package="parkingspace_detection",
+        executable="parking_space",
+        emulate_tty=True
+    )
+
     ld.add_action(joystick_node)
     ld.add_action(joystick_to_cmd_node)
     ld.add_action(can_rx_node)
@@ -86,5 +92,6 @@ def generate_launch_description():
     ld.add_action(car_command_node)
     ld.add_action(init_autonomous_node)
     ld.add_action(autonomous_driving_node)
+    ld.add_action(search_parking_node)
 
     return ld

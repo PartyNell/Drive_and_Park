@@ -22,11 +22,11 @@ include_directories(
 )
 include_directories(src)
 
-add_executable(parkingspace_detection src/parkingspace.cpp src/LidarScan.cpp)
-ament_target_dependencies(parkingspace_detection rclcpp interfaces sensor_msgs)
+add_executable(parking_space src/parkingspace.cpp src/LidarScan.cpp)
+ament_target_dependencies(parking_space rclcpp interfaces sensor_msgs)
 
 install(TARGETS
-  parkingspace_detection
+  parking_space
   DESTINATION lib/${PROJECT_NAME}
 )
 
