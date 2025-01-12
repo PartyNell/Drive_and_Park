@@ -11,8 +11,10 @@
 
 
 #define STEER_RIGHT 1.0 
+#define STEER_LEFT -1.0
 #define STEER_HALF_LEFT -0.5
 #define STEER_NEUTRAL 0.0
+#define SPEED_TEST 0.25
 #define SPEED_NORMAL 0.3
 #define SPEED_STOP 0.0
 #define FORWARD false
@@ -42,6 +44,7 @@ private:
         STRAIGHTEN_WHEELS,
         BEGIN_FORWARD_80CM,
         FORWARD_80CM_STEER_RIGHT,
+        CHANGE_WHEELS,
         REVERSE_60CM_STEER_HALF_LEFT,
         FINAL_FORWARD_125CM_STEER_RIGHT,
         LEFT_PARKING_SPACE
@@ -61,10 +64,11 @@ private:
         
         0.0,    // IDLE
         0.0,   // STRAIGHTEN_WHEELS
-        80.0,   // BEGIN_FORWARD_80CM
+        15.0,   // BEGIN_FORWARD_80CM
         80.0,  // FORWARD_80CM_STEER_RIGHT
-        60.0,   // REVERSE_60CM_STEER_HALF_LEFT
-        125.0,   // FINAL_FORWARD_125CM_STEER_RIGHT
+        20.0, // CHANGE_WHEELS
+        40.0,   // REVERSE_60CM_STEER_HALF_LEFT
+        60.0,   // FINAL_FORWARD_125CM_STEER_RIGHT
         0.0
     };
 
