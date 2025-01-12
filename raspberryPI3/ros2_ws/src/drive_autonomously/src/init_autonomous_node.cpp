@@ -45,6 +45,7 @@ private:
 
             if(steer_order > 1.0) steer_order=1.0;
             else if(steer_order < -1.0) steer_order=-1.0;
+            else if (abs(angle_to_perform) < 0.3) steer_order=0.0;
             else if(steer_order > 0.0 && steer_order < 0.20) steer_order=0.2;
             else if(steer_order < 0.0 && steer_order > -0.20) steer_order=-0.2;
 
