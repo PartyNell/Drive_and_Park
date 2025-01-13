@@ -41,15 +41,15 @@ private:
     {
         if(init_state){
 
-            if(angle_to_perform > 0.25){
-                steer_order = 1.0;
-            } else if (angle_to_perform < -0.25){
-                steer_order = -1.0;
-            } else {
-                steer_order = 64*pow(angle_to_perform, 3);
-            }
+            steer_order = 64*pow(angle_to_perform, 3);
 
-            RCLCPP_INFO(this->get_logger(), "STEER ORDER : %f", steer_order);
+            if(steer_order > 1.0) steer_order=1.0;
+            else if(steer_order < -1.0) steer_order=-1.0;
+            else if (abs(angle_to_perform) < 0.3) steer_order=0.0;
+            else if(steer_order > 0.0 && steer_order < 0.20) steer_order=0.2;
+            else if(steer_order < 0.0 && steer_order > -0.20) steer_order=-0.2;
+
+            //RCLCPP_INFO(this->get_logger(), "STEER ORDER : %f", steer_order);
 
             auto car_order = interfaces::msg::JoystickOrder();
             car_order.start = true;
@@ -63,9 +63,8 @@ private:
             current_time = clock_.now();
 
             init_time = current_time - reference_time;
-            RCLCPP_INFO(this->get_logger(), "INIT TIME : %f", init_time.seconds());
 
-            if(abs(angle_to_perform) < 0.08){
+            if(abs(angle_to_perform) < 0.05){
                 ++validation_counter;
                 if(validation_counter == 5) {
                     std_msgs::msg::Bool finished;
@@ -99,13 +98,9 @@ private:
 
     void compute_angle(const interfaces::msg::Ultrasonic & us) {
         //compute the angle between the initial position of the car and the aligned position
-        RCLCPP_INFO(this->get_logger(), "ULTRASONIC : front= %d, back=%d", us.front_right, us.rear_right);
-
         if(us.front_right <= 200 && us.rear_right <= 200){
 
             angle_to_perform = atan(static_cast<float>(us.front_right-us.rear_right)/CAR_SIZE);
-
-            RCLCPP_INFO(this->get_logger(), "ANGLE TO PERFORM : %f", angle_to_perform);
             
         } else if (init_state && (us.front_right > 200 || us.rear_right > 200)) {
             //the wall or the parked car are too far to compute the angle
