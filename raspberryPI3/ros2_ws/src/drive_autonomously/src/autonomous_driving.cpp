@@ -149,6 +149,13 @@ class AutonomousDriving : public rclcpp::Node
           - Parallel parking protocol
       */
       parking_type = space_detected.data;
+
+      //STOP the car and wait 10 seconds
+      set_car_order(true, 1, 0.0, 0.0, false);
+      rclcpp::sleep_for(std::chrono::seconds(10));
+
+      //START parking operation
+      
     }
 
 
