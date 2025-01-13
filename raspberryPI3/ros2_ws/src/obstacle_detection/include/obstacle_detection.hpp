@@ -16,7 +16,7 @@
 //////////////////////////////
 #define THRESHOLD_PARK_STOP 15
 #define LASER_THRESHOLD_BACK_STOP 30
-#define LASER_THRESHOLD_FRONT_STOP 100
+#define LASER_THRESHOLD_FRONT_STOP 120
 //////////////////////////////
 
 using namespace std::chrono_literals;

@@ -196,7 +196,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
     bool margin_reached_back = false;
     bool margin_reached_front = false;
 
-    for (size_t i = 180; i < 360 ; ++i)
+    for (size_t i = 150; i < 360 ; ++i)
     {
         const auto &range = msg->ranges[i];
 
@@ -208,7 +208,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
         }
     }
 
-    for (size_t i = 60; i < 120 ; ++i)
+    for (size_t i = 50; i < 130 ; ++i)
     {
         const auto &range = msg->ranges[i];
 
