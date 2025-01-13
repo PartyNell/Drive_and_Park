@@ -105,7 +105,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(false, -0.5);
+            car_move(false, -0.75);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
@@ -120,7 +120,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(true, 0.4);
+            car_move(true, 0.65);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    

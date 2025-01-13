@@ -35,9 +35,9 @@ private:
         15.0,   // FORWARD_15CM
         125.0,  // REVERSE_TO_45DEG_STEER_RIGHT
         60.0,   // FORWARD_60CM_STEER_LEFT_50
-        50.0,   // REVERSE_50CM_STEER_RIGHT_40
+        30.0,   // REVERSE_50CM_STEER_RIGHT_40
         0.0,    // STRAIGHTEN_WHEELS
-        80.0,    // FINAL_REVERSE_80CM
+        55.0,    // FINAL_REVERSE_80CM
         0.0
     };
 
