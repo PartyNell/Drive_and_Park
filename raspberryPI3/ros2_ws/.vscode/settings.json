@@ -1,5 +1,8 @@
 {
     "files.associations": {
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp"
         "functional": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",

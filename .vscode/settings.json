@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "functional": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",
         "cmath": "cpp",
@@ -11,6 +12,7 @@
         "ctime": "cpp",
         "cwchar": "cpp",
         "cwctype": "cpp",
+        "any": "cpp",
         "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -33,7 +35,6 @@
         "vector": "cpp",
         "exception": "cpp",
         "algorithm": "cpp",
-        "functional": "cpp",
         "iterator": "cpp",
         "memory": "cpp",
         "memory_resource": "cpp",
@@ -65,6 +66,7 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeindex": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "variant": "cpp"
     }
 }

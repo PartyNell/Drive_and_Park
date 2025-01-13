@@ -14,11 +14,13 @@ include_directories(include)
 
 add_executable(autonomous_driving src/autonomous_driving.cpp)
 add_executable(init_autonomous_node src/init_autonomous_node.cpp)
+add_executable(auto_parking src/auto_parking.cpp)
 
 ament_target_dependencies(autonomous_driving rclcpp interfaces std_msgs)
 ament_target_dependencies(init_autonomous_node rclcpp interfaces std_msgs)
+ament_target_dependencies(auto_parking rclcpp interfaces std_msgs)
 
-install(TARGETS autonomous_driving init_autonomous_node
+install(TARGETS autonomous_driving init_autonomous_node auto_parking
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
