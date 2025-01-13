@@ -15,7 +15,8 @@
 
 //////////////////////////////
 #define THRESHOLD_PARK_STOP 15
-#define LASER_THRESHOLD_PARK_STOP 30
+#define LASER_THRESHOLD_BACK_STOP 30
+#define LASER_THRESHOLD_FRONT_STOP 100
 //////////////////////////////
 
 using namespace std::chrono_literals;
@@ -27,8 +28,10 @@ public:
 //////////////////////////////////////////////////////    
     bool get_parkmod() const { return parkmod_; }
     void set_parkmod(bool value) { parkmod_ = value; }
-    bool get_is_laser_margin_reach() const { return is_laser_margin_reach_; }
-    void set_is_laser_margin_reach(bool value) { is_laser_margin_reach_ = value; }
+    bool get_is_margin_reach_back() const { return is_margin_reach_back_; }
+    void set_is_margin_reach_back(bool value) { is_margin_reach_back_ = value; }
+    bool get_is_margin_reach_front() const { return is_margin_reach_front_; }
+    void set_is_margin_reach_front(bool value) { is_margin_reach_front_ = value; }
 //////////////////////////////////////////////////////
 
 private:
@@ -43,7 +46,8 @@ private:
 
     ////////////////////////////////////////////////////////
     bool parkmod_;
-    bool is_laser_margin_reach_;
+    bool is_margin_reach_back_;
+    bool is_margin_reach_front_;
     ////////////////////////////////////////////////////////
 
     class SpeedCoefficient {

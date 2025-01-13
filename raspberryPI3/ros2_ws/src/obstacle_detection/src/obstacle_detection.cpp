@@ -6,7 +6,8 @@ ObstacleDetection::ObstacleDetection()
         speed_value_front(SpeedCoefficient::NORMAL), 
         speed_value_back(SpeedCoefficient::NORMAL), 
         parkmod_(true), 
-        is_laser_margin_reach_(false)
+        is_margin_reach_back_(false),
+        is_margin_reach_front_(false)
 {
     // Create a subscription to the "/us_data" topic
     subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>(
@@ -70,15 +71,26 @@ void ObstacleDetection::update_speed_info(
                 speed_value_back = SpeedCoefficient::STOP; 
             }
         }
-        else if (is_laser_margin_reach_ == true) // Condition modifiée ici
+        else if (is_margin_reach_back_ == true)
         {
             will_send_speed_ = true;
 
-            if (is_front == false) { // Supposons ici que c'est l'arrière qui est concerné par le lidar
+            if (is_front == false) {
                 if (speed_value_back != SpeedCoefficient::STOP) {
                     RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK l !!!", orientation.c_str());
                 }
                 speed_value_back = SpeedCoefficient::STOP; 
+            }
+        }
+        else if (is_margin_reach_front_ == true)
+        {
+            will_send_speed_ = true;
+
+            if (is_front == true) {
+                if (speed_value_front != SpeedCoefficient::STOP) {
+                    RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK l !!!", orientation.c_str());
+                }
+                speed_value_front = SpeedCoefficient::STOP; 
             }
         }
         else
@@ -181,31 +193,53 @@ void ObstacleDetection::topic_callback(const interfaces::msg::Ultrasonic::Shared
 */
 void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-    bool margin_reached = false;
+    bool margin_reached_back = false;
+    bool margin_reached_front = false;
 
     for (size_t i = 180; i < 360 ; ++i)
     {
         const auto &range = msg->ranges[i];
 
-        if (range <= 0.3 && 
+        if (range <= static_cast<float>(LASER_THRESHOLD_BACK_STOP)/100 && 
             !std::isinf(range) && !std::isnan(range))
         {
-            margin_reached = true;
+            margin_reached_back = true;
             break;
         }
     }
 
-    if (margin_reached)
+    for (size_t i = 60; i < 120 ; ++i)
     {
-        if (!is_laser_margin_reach_)
+        const auto &range = msg->ranges[i];
+
+        if (range <= static_cast<float>(LASER_THRESHOLD_FRONT_STOP)/100 && 
+            !std::isinf(range) && !std::isnan(range))
         {
-            RCLCPP_WARN(this->get_logger(), "Lidar margin reached!");
+            margin_reached_front = true;
+            break;
         }
-        is_laser_margin_reach_ = true;
+    }
+
+    if (margin_reached_back)
+    {
+        if (!is_margin_reach_back_)
+        {
+            RCLCPP_WARN(this->get_logger(), "Lidar margin back reached!");
+        }
+        is_margin_reach_back_ = true;
+    }
+    else if (margin_reached_front)
+    {
+        if (!is_margin_reach_front_)
+        {
+            RCLCPP_WARN(this->get_logger(), "Lidar margin front reached!");
+        }
+        is_margin_reach_front_ = true;
     }
     else
     {
-        is_laser_margin_reach_ = false;
+        is_margin_reach_back_ = false;
+        is_margin_reach_front_ = false;
     }
 }
 ///////////////////////////////////
