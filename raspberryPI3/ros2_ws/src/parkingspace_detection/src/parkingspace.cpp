@@ -11,6 +11,7 @@ ParkingSpace::ParkingSpace() : Node("parking_space"), detected_parking_type_(Par
 	subscriber_search_parking = this->create_subscription<std_msgs::msg::Bool>("/start_search", 10, std::bind(&ParkingSpace::init_search, this, std::placeholders::_1));
 
 	//PUBLISHERS
+	finish_initialization = this->create_publisher<std_msgs::msg::Bool>("/search_finish_initialization", 10);
 	type_place_info = this->create_publisher<std_msgs::msg::Int32>("/info_parking_place", 10);
 
     //timer_ = this->create_wall_timer(500ms, std::bind(&ParkingSpace::parking_place_info, this));
@@ -76,6 +77,10 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 				scan.set_ref_distance(scan.get_ref_distance_init()/LIMIT_INIT);
 				RCLCPP_INFO(this->get_logger(), "Distance of reference set to : %f",scan.get_ref_distance());
 				scan.set_isInitialized(false);
+
+				std_msgs::msg::Bool message;
+				message.data = true;
+				finish_initialization->publish(message);
 			}
 		}
 		else {
@@ -122,11 +127,14 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 
 				} else {
 					message.data = static_cast<int32_t>(ParkingType::NONE);
-					RCLCPP_DEBUG(this->get_logger(), "Not a valid parking space");
+					RCLCPP_INFO(this->get_logger(), "Not a valid parking space");
+					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
 				}
 
-				type_place_info->publish(message);
-				search_in_progress = false;
+				if(message.data != static_cast<int32_t>(ParkingType::NONE)){
+					type_place_info->publish(message);
+					search_in_progress = false;
+				}
 			}
 		}
 	}

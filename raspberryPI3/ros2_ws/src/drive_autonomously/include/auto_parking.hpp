@@ -8,6 +8,9 @@
 #include "interfaces/msg/speed_info.hpp"
 #include "interfaces/msg/motors_feedback.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/int32.hpp"
+
+#include "../../parkingspace_detection/include/variable.hpp"
 
 using std::placeholders::_1;
 
@@ -47,11 +50,11 @@ private:
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_parking_finished_;
     
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr motors_feedback_subscription_;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_start_parking_;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_start_parking_;
     rclcpp::TimerBase::SharedPtr timer_;
     interfaces::msg::JoystickOrder car_order;
-    bool m_publishing, start, waiting;
-    void init_parking(const std_msgs::msg::Bool & i);
+    bool m_publishing, start_straight, start_parallel, waiting;
+    void init_parking(const std_msgs::msg::Int32 & i);
     void update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg);
     void timer_callback();
     void car_move(bool reverse = false, float steer = 0.0, float speed = 0.3);

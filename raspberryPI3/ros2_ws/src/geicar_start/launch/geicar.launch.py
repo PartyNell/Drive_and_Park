@@ -81,6 +81,12 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    parking_node = Node(
+        package="drive_autonomously",
+        executable="auto_parking",
+        emulate_tty=True
+    )
+
     ld.add_action(joystick_node)
     ld.add_action(joystick_to_cmd_node)
     ld.add_action(can_rx_node)
@@ -93,5 +99,6 @@ def generate_launch_description():
     ld.add_action(init_autonomous_node)
     ld.add_action(autonomous_driving_node)
     ld.add_action(search_parking_node)
+    ld.add_action(parking_node)
 
     return ld

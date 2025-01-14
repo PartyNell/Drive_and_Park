@@ -9,6 +9,8 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/int32.hpp"
 
+#include "../../parkingspace_detection/include/variable.hpp"
+
 #define PULSE_FOR_A_REVOLUTION 36
 #define WHEEL_DIAMETER 20.0
 #define MAX_DISTANCE 500 //in centimeters
@@ -33,10 +35,11 @@ class AutonomousDriving : public rclcpp::Node
       //SUBSCRIBERS
       subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::init_autonomous_mode, this, _1));
       subscription_motors_feedback_ = this->create_subscription<interfaces::msg::MotorsFeedback>("motors_feedback", 10, std::bind(&AutonomousDriving::computeDistance, this, _1));
-      subscriber_detect_parking = this->create_subscription<std_msgs::msg::Int32>("/info_parking_place", 10, std::bind(&AutonomousDriving::detect_parking, this, _1));
 
       //STATES subscribers
-      subscriber_init_ok_ = this->create_subscription<std_msgs::msg::Bool>("init_finished", 10, std::bind(&AutonomousDriving::init_search_state, this, _1));
+      subscriber_init_ok_ = this->create_subscription<std_msgs::msg::Bool>("init_finished", 10, std::bind(&AutonomousDriving::init_LiDar, this, _1));
+      subscriber_start_detection = this->create_subscription<std_msgs::msg::Bool>("/search_finish_initialization", 10, std::bind(&AutonomousDriving::init_search_state, this, _1));
+      subscriber_detect_parking = this->create_subscription<std_msgs::msg::Int32>("/info_parking_place", 10, std::bind(&AutonomousDriving::detect_parking, this, _1));
       subscriber_parking_ok_ = this->create_subscription<std_msgs::msg::Bool>("parking_finished", 10, std::bind(&AutonomousDriving::wait_order, this, _1));
 
       timer_ = this->create_wall_timer(50ms, std::bind(&AutonomousDriving::timer_callback, this));
@@ -55,12 +58,20 @@ class AutonomousDriving : public rclcpp::Node
         mode = joystick.mode;
 
         if(mode == 1){
-          //START initialization
-          std_msgs::msg::Bool init_autonomous;
-          init_autonomous.data = true;
-          publisher_init_state_->publish(init_autonomous);
+          if(manual){
+            //START initialization
+            std_msgs::msg::Bool init_autonomous;
+            init_autonomous.data = true;
+            publisher_init_state_->publish(init_autonomous);
 
-          init_in_progress = true;
+            init_in_progress = true;
+          } else if (parked) {
+            //START leave parking protocole
+            RCLCPP_INFO(this->get_logger(), "LEAVE PARKING");
+
+            leaving_in_progress = true;
+          }
+          
           search_in_progress = false;
           parking_in_progress = false;
           manual = false;
@@ -71,19 +82,55 @@ class AutonomousDriving : public rclcpp::Node
             std_msgs::msg::Bool init_autonomous;
             init_autonomous.data = false; 
             publisher_init_state_->publish(init_autonomous);
+
+            manual = true;
           }
           else if(search_in_progress){
             //STOP searching empty parking space
             std_msgs::msg::Bool search_parking;
             search_parking.data = false; 
             publisher_search_parking->publish(search_parking);
+
+            manual = true;
+          } 
+          else if (parked) {
+            manual = false;
           }
             init_in_progress = false;
             search_in_progress = false;
             parking_in_progress = false;
-            manual = true;
+            
         }
       }
+    }
+
+    void init_LiDar(const std_msgs::msg::Bool & init){
+      /*
+        If the execution of the initilization succeed then the car switch to the search state. 
+        The car is stopped until the LiDar get Initialized
+      */
+        init_in_progress = false;
+
+        if(init.data){
+          RCLCPP_INFO(this->get_logger(), "Initialisation DONE");
+
+          set_car_order(true, 1, 0.0, 0.0, false);
+
+          //stop the car for LiDar initialization
+          std_msgs::msg::Bool init_LiDar;
+          init_LiDar.data = true; 
+          publisher_search_parking->publish(init_LiDar);
+
+          search_in_progress = true;
+
+        } else {
+          RCLCPP_INFO(this->get_logger(), "Initialisation FAILED");
+
+          //STOP the car and switch to manual mode
+          set_car_order(true, 0, 0.0, 0.0, false);
+
+          search_in_progress = false;
+        }
     }
 
     void init_search_state(const std_msgs::msg::Bool & init){
@@ -93,23 +140,14 @@ class AutonomousDriving : public rclcpp::Node
           - the car should compute the traveled distance from the beginning of the search state
           - the car looking for an empty parking space
       */
-        init_in_progress = false;
-
         if(init.data){
-          RCLCPP_INFO(this->get_logger(), "Initialisation DONE");
+          RCLCPP_INFO(this->get_logger(), "LiDar Initialisation DONE");
 
-          set_car_order(true, 1, 0.7, 0.0, false);
+          set_car_order(true, 1, 0.5, 0.0, false);
           distance_travelled = 0.0;
 
-          //start looking at an empty parking space
-          std_msgs::msg::Bool search_parking;
-          search_parking.data = true; 
-          publisher_search_parking->publish(search_parking);
-
-          search_in_progress = true;
-
         } else {
-          RCLCPP_INFO(this->get_logger(), "Initialisation FAILED");
+          RCLCPP_INFO(this->get_logger(), "LiDar Initialisation FAILED");
 
           //STOP the car and switch to manual mode
           set_car_order(true, 0, 0.0, 0.0, false);
@@ -143,7 +181,7 @@ class AutonomousDriving : public rclcpp::Node
 
     void timer_callback()
     {
-      if(search_in_progress)
+      if((search_in_progress) && mode==1)
         publisher_car_order_->publish(car_order);
     }
 
@@ -155,14 +193,30 @@ class AutonomousDriving : public rclcpp::Node
       */
       parking_type = space_detected.data;
 
+      // RCLCPP_INFO(this->get_logger(), "PARKING TYPE : %d", parking_type);
+
       //STOP the car and wait 10 seconds
       set_car_order(true, 1, 0.0, 0.0, false);
-      rclcpp::sleep_for(std::chrono::seconds(10));
+      publisher_car_order_->publish(car_order);
+
+      rclcpp::sleep_for(std::chrono::seconds(5));
 
       //START parking operation
       search_in_progress = false;
-      parking_in_progress = false;
+      parking_in_progress = true;
+
+      std_msgs::msg::Int32 parking;
+      parking.data = parking_type; 
+      publisher_parking_state_->publish(parking);
       
+    }
+
+    void wait_order(const std_msgs::msg::Bool & park){
+      /*
+        Once the car parked it switch to manual mode and stop the car
+      */
+      parked = true;
+      set_car_order(true, 0, 0.0, 0.0, false);
     }
 
 
@@ -183,11 +237,12 @@ class AutonomousDriving : public rclcpp::Node
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_state_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_search_parking;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_parking_state_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_parking_state_;
 
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscriber_autonomous_mode_;
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_init_ok_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_start_detection;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriber_detect_parking;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_parking_ok_;
     
@@ -197,15 +252,17 @@ class AutonomousDriving : public rclcpp::Node
     bool init_in_progress = false;
     bool search_in_progress = false;
     bool parking_in_progress = false;
+    bool parked = false;
+    bool leaving_in_progress = false;
 
-    bool manual = false;
+    bool manual = true;
 
     interfaces::msg::JoystickOrder car_order;
 
 	  float distance_to_add = 0.0; 
     float distance_travelled = 0.0;
 
-    int parking_type;
+    int parking_type = -1;
 };
 
 int main(int argc, char * argv[])

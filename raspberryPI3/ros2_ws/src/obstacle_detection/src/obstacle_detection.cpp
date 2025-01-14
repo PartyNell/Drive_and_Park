@@ -1,7 +1,7 @@
 #include "obstacle_detection.hpp"
 
 ObstacleDetection::ObstacleDetection() 
-    : Node("obstacle_detection"), will_send_speed_(false), speed_value_front(SpeedCoefficient::NORMAL), speed_value_back(SpeedCoefficient::NORMAL)
+    : Node("obstacle_detection"), will_send_speed_(false), speed_value_front(SpeedCoefficient::NORMAL_NON_DETECTION), speed_value_back(SpeedCoefficient::NORMAL_NON_DETECTION)
 {
     // Create a subscription to the "/us_data" topic
     subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>(
@@ -78,12 +78,16 @@ void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
     }
     else if (sensor_value < THRESHOLD_CAREFUL)
     {
-        RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFULL !!!", orientation.c_str());
-        will_send_speed_ = true;
         if (is_front){
-            speed_value_front = SpeedCoefficient::NORMAL; 
+            if (speed_value_front != SpeedCoefficient::NORMAL_DETECTION)
+                RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFULL !!!", orientation.c_str());
+
+            speed_value_front = SpeedCoefficient::NORMAL_DETECTION; 
         } else {
-            speed_value_back = SpeedCoefficient::NORMAL; 
+            if (speed_value_back != SpeedCoefficient::NORMAL_DETECTION)
+               RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFULL !!!", orientation.c_str());
+
+            speed_value_back = SpeedCoefficient::NORMAL_DETECTION; 
         }
     }
     else
@@ -91,9 +95,9 @@ void ObstacleDetection::update_speed_info(bool is_front, int16_t sensor_value)
         // No warning or message; speed stays NORMAL.
         will_send_speed_ = true;
         if (is_front)
-            speed_value_front = SpeedCoefficient::NORMAL; 
+            speed_value_front = SpeedCoefficient::NORMAL_NON_DETECTION; 
         else
-            speed_value_back = SpeedCoefficient::NORMAL; 
+            speed_value_back = SpeedCoefficient::NORMAL_NON_DETECTION; 
     }
 }
 

@@ -42,6 +42,7 @@ private:
 	rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr motors_feedback_subscription_;
 	rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_search_parking;
 	rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr type_place_info;
+	rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr finish_initialization;
 	rclcpp::TimerBase::SharedPtr timer_;
 	std::shared_ptr<rclcpp::Clock> clock_;
 	
