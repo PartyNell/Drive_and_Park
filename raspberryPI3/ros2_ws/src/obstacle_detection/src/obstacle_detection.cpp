@@ -77,7 +77,7 @@ void ObstacleDetection::update_speed_info(
 
             if (is_front == false) {
                 if (speed_value_back != SpeedCoefficient::STOP) {
-                    RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK l !!!", orientation.c_str());
+                    RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK l back !!!", orientation.c_str());
                 }
                 speed_value_back = SpeedCoefficient::STOP; 
             }
@@ -88,7 +88,7 @@ void ObstacleDetection::update_speed_info(
 
             if (is_front == true) {
                 if (speed_value_front != SpeedCoefficient::STOP) {
-                    RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK l !!!", orientation.c_str());
+                    RCLCPP_WARN(this->get_logger(), "'%s' STOP PARK l front !!!", orientation.c_str());
                 }
                 speed_value_front = SpeedCoefficient::STOP; 
             }
@@ -96,11 +96,11 @@ void ObstacleDetection::update_speed_info(
         else
         {
                 // No warning or message; speed stays NORMAL.
-                will_send_speed_ = true;
+            will_send_speed_ = true;
             if (is_front)
                 speed_value_front = SpeedCoefficient::NORMAL; 
             else
-                speed_value_back = SpeedCoefficient::NORMAL;
+               speed_value_back = SpeedCoefficient::NORMAL;
         }
     }
 
@@ -193,9 +193,6 @@ void ObstacleDetection::topic_callback(const interfaces::msg::Ultrasonic::Shared
 */
 void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-    bool margin_reached_back = false;
-    bool margin_reached_front = false;
-
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     
     std::vector<std::pair<float, float>> cartesian_coords; // Pour stocker les coordonnées cartésiennes (x, y)
@@ -204,10 +201,10 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
 
     constexpr float lidar_offset_y = -0.4; // Décalage du Lidar en mètres (excentré de -40 cm)
     // Définir les limites de la zone d'intérêt (en mètres)
-    constexpr float rect_min_x = -2.0; // Limite gauche
-    constexpr float rect_max_x = 2.0;  // Limite droite
-    constexpr float rect_min_y = -1.0; // Limite arrière
-    constexpr float rect_max_y = 3.0;  // Limite avant
+    constexpr float rect_min_x = -0.45; // Limite gauche
+    constexpr float rect_max_x = 0.45;  // Limite droite
+    constexpr float rect_min_y = -0.7; // Limite arrière
+    constexpr float rect_max_y = 0.7;  // Limite avant
 
     size_t num_measurements = static_cast<size_t>((msg->angle_max - msg->angle_min) / degree_increment);
     cartesian_coords.reserve(num_measurements);
@@ -225,26 +222,18 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
                 !std::isinf(range) && !std::isnan(range))
             {
                 range = std::round(range / precision_cm) * precision_cm; // Arrondir à 1 cm
-                float x = range * std::cos(angle);
-                float y = range * std::sin(angle) + lidar_offset_y;
+                float x = -(range * std::cos(angle));
+                float y = -(range * std::sin(angle)) + lidar_offset_y;
 
                 cartesian_coords.emplace_back(x, y);
             }
         }
     }
 
-    // Affichage des coordonnées cartésiennes
-    std::ostringstream oss;
-    oss << "Cartesian coordinates (x, y):\n";
-    for (const auto& coord : cartesian_coords)
-    {
-        oss << "(" << coord.first << ", " << coord.second << ")\n";
-    }
-    RCLCPP_INFO(this->get_logger(), "%s", oss.str().c_str());
-
     // Filtrer les points dans la zone rectangulaire
     std::vector<std::pair<float, float>> filtered_points_front;
     std::vector<std::pair<float, float>> filtered_points_back;
+
     for (const auto& coord : cartesian_coords)
     {
         if (coord.first >= rect_min_x && coord.first <= rect_max_x &&
@@ -258,7 +247,8 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
             filtered_points_back.push_back(coord);
         }
     }
-   // Detection d'un obstacle
+
+    // Detection d'un obstacle
     if (!filtered_points_front.empty())
     {
         if (!is_margin_reach_front_)
@@ -267,7 +257,13 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
         }
         is_margin_reach_front_ = true;
     }
-    else if (!filtered_points_back.empty())
+    else if (filtered_points_front.empty())
+    {
+        is_margin_reach_front_ = false;
+    }
+    
+    
+    if (!filtered_points_back.empty())
     {
         if (!is_margin_reach_back_)
         {
@@ -275,12 +271,12 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
         }
         is_margin_reach_back_ = true;
     }
-    else
+    else if (filtered_points_back.empty()) 
     {
         is_margin_reach_back_ = false;
-        is_margin_reach_front_ = false;
     }
 }
+
 ///////////////////////////////////
 
 
