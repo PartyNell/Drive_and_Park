@@ -196,45 +196,84 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
     bool margin_reached_back = false;
     bool margin_reached_front = false;
 
-    for (size_t i = 150; i < 360 ; ++i)
-    {
-        const auto &range = msg->ranges[i];
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    std::vector<std::pair<float, float>> cartesian_coords; // Pour stocker les coordonnées cartésiennes (x, y)
+    constexpr float degree_increment = M_PI / 180.0; // 1° en radians
+    constexpr float precision_cm = 0.01; // Précision en mètres (1 cm)
 
-        if (range <= static_cast<float>(LASER_THRESHOLD_BACK_STOP)/100 && 
-            !std::isinf(range) && !std::isnan(range))
+    constexpr float lidar_offset_y = -0.4; // Décalage du Lidar en mètres (excentré de -40 cm)
+    // Définir les limites de la zone d'intérêt (en mètres)
+    constexpr float rect_min_x = -2.0; // Limite gauche
+    constexpr float rect_max_x = 2.0;  // Limite droite
+    constexpr float rect_min_y = -1.0; // Limite arrière
+    constexpr float rect_max_y = 3.0;  // Limite avant
+
+    size_t num_measurements = static_cast<size_t>((msg->angle_max - msg->angle_min) / degree_increment);
+    cartesian_coords.reserve(num_measurements);
+
+    for (size_t i = 0; i < num_measurements; ++i)
+    {
+        float angle = msg->angle_min + i * degree_increment;
+        size_t range_index = static_cast<size_t>((angle - msg->angle_min) / msg->angle_increment);
+
+        if (range_index < msg->ranges.size())
         {
-            margin_reached_back = true;
-            break;
+            float range = msg->ranges[range_index];
+
+            if (range > msg->range_min && range < msg->range_max &&
+                !std::isinf(range) && !std::isnan(range))
+            {
+                range = std::round(range / precision_cm) * precision_cm; // Arrondir à 1 cm
+                float x = range * std::cos(angle);
+                float y = range * std::sin(angle) + lidar_offset_y;
+
+                cartesian_coords.emplace_back(x, y);
+            }
         }
     }
 
-    for (size_t i = 50; i < 130 ; ++i)
+    // Affichage des coordonnées cartésiennes
+    std::ostringstream oss;
+    oss << "Cartesian coordinates (x, y):\n";
+    for (const auto& coord : cartesian_coords)
     {
-        const auto &range = msg->ranges[i];
+        oss << "(" << coord.first << ", " << coord.second << ")\n";
+    }
+    RCLCPP_INFO(this->get_logger(), "%s", oss.str().c_str());
 
-        if (range <= static_cast<float>(LASER_THRESHOLD_FRONT_STOP)/100 && 
-            !std::isinf(range) && !std::isnan(range))
+    // Filtrer les points dans la zone rectangulaire
+    std::vector<std::pair<float, float>> filtered_points_front;
+    std::vector<std::pair<float, float>> filtered_points_back;
+    for (const auto& coord : cartesian_coords)
+    {
+        if (coord.first >= rect_min_x && coord.first <= rect_max_x &&
+            coord.second >= 0 && coord.second <= rect_max_y)
         {
-            margin_reached_front = true;
-            break;
+            filtered_points_front.push_back(coord);
+        }
+        if (coord.first >= rect_min_x && coord.first <= rect_max_x &&
+            coord.second >= rect_min_y && coord.second <= 0)
+        {
+            filtered_points_back.push_back(coord);
         }
     }
-
-    if (margin_reached_back)
-    {
-        if (!is_margin_reach_back_)
-        {
-            RCLCPP_WARN(this->get_logger(), "Lidar margin back reached!");
-        }
-        is_margin_reach_back_ = true;
-    }
-    else if (margin_reached_front)
+   // Detection d'un obstacle
+    if (!filtered_points_front.empty())
     {
         if (!is_margin_reach_front_)
         {
             RCLCPP_WARN(this->get_logger(), "Lidar margin front reached!");
         }
         is_margin_reach_front_ = true;
+    }
+    else if (!filtered_points_back.empty())
+    {
+        if (!is_margin_reach_back_)
+        {
+            RCLCPP_WARN(this->get_logger(), "Lidar margin back reached!");
+        }
+        is_margin_reach_back_ = true;
     }
     else
     {

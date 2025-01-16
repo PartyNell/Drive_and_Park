@@ -7,6 +7,10 @@
 #include "interfaces/msg/ultrasonic.hpp"
 #include "interfaces/msg/speed_info.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include <cmath>
+#include <vector>
+#include <utility>
+#include <iomanip>
 
 #define THRESHOLD_STOP 35
 #define THRESHOLD_SLOW 45
@@ -62,7 +66,6 @@ private:
     void update_speed_info(bool is_front, int16_t sensor_value);
     void topic_callback(const interfaces::msg::Ultrasonic::SharedPtr msg);
     void laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
-    
 };
 
 #endif // OBSTACLE_DETECTION_HPP
