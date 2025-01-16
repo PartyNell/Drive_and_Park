@@ -205,7 +205,6 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             car_move(false, -1.0, 0.0); // Braquer à fond à gauche (stopping = mouvement neutre)
-            delay(); 
         }
         else if (waiting)
         {
@@ -224,6 +223,21 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> TURN_BEFORE_REVERSE");
+            m_state = ParkingState::TURN_BEFORE_REVERSE;
+            waiting = false;
+        }
+        break;
+
+    case ParkingState::TURN_BEFORE_REVERSE:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(false, 1.0, 0.2); // Avancer
+        }
+        else if (waiting && m_current_distance >= m_current_distance_limit)
+        {
             RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STOP_STEER_RIGHT_100");
             m_state = ParkingState::STOP_STEER_RIGHT_100;
             waiting = false;
@@ -235,7 +249,6 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             car_move(false, 1.0, 0.0); // Braquer à fond à droite (stopping)
-            delay(); 
         }
         else if (waiting)
         {
@@ -269,7 +282,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FINAL_REVERSE_80CM");
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_20CM");
             m_state = ParkingState::REVERSE_20CM;
             waiting = false;
         }
@@ -376,18 +389,6 @@ void AutoParking::car_stop()
     car_order.steer = 0.0;
     car_order.reverse = false;
     m_publishing = true;
-}
-
-void AutoParking::delay()
-{
-    rclcpp::Time reference_time;
-    rclcpp::Time current_time;
-
-    reference_time = clock_.now();
-    current_time = clock_.now();
-    
-    while ((current_time - reference_time) < waiting_delay)
-        current_time = clock_.now(); 
 }
 
 int main(int argc, char *argv[])

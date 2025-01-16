@@ -12,6 +12,8 @@
 
 using std::placeholders::_1;
 
+#define DISTANCE2PULSE (36/(20*3.14))
+
 class AutoParking : public rclcpp::Node
 {
 public:
@@ -45,6 +47,7 @@ private:
         REVERSE_1M,                 // Reculer de 1m
         STOP_STEER_LEFT_100,        // Stop et braque à fond à gauche
         FORWARD_65CM,               // Avancer de 65 cm
+        TURN_BEFORE_REVERSE,        // Tourne les roues avant de reculer
         STOP_STEER_RIGHT_100,       // Stop et braque à fond à droite
         REVERSE_90CM,               // Reculer de 90 cm
         STRAIGHTEN_WHEELS_PARALLEL, // Mettre les roues droites
@@ -68,16 +71,17 @@ private:
         80.0,   // FINAL_REVERSE_80CM
         
         // PARALLEL PARKING STATE
-        100.0,  // REVERSE_1M
-        0.0,    // STOP_STEER_LEFT_100
-        65.0,   // FORWARD_65CM
-        0.0,    // STOP_STEER_RIGHT_100
-        90.0,   // REVERSE_90CM
-        0.0,    // STRAIGHTEN_WHEELS_PARALLEL
-        20.0,   // REVERSE_20CM
-        100.0,  // STEER_LEFT_100_REVERSE_1M
-        0.0,    // STEER_RIGHT_100_REVERSE
-        40.0    // FORWARD_40CM
+        100.0*DISTANCE2PULSE,  // REVERSE_1M
+        0.0*DISTANCE2PULSE,    // STOP_STEER_LEFT_100
+        65.0*DISTANCE2PULSE,   // FORWARD_65CM
+        15.0*DISTANCE2PULSE,   // TURN_BEFORE_REVERSE
+        0.0*DISTANCE2PULSE,    // STOP_STEER_RIGHT_100
+        90.0*DISTANCE2PULSE,   // REVERSE_90CM
+        0.0*DISTANCE2PULSE,    // STRAIGHTEN_WHEELS_PARALLEL
+        25.0*DISTANCE2PULSE,   // REVERSE_20CM
+        90.0*DISTANCE2PULSE,  // STEER_LEFT_100_REVERSE_1M
+        0.0*DISTANCE2PULSE,    // STEER_RIGHT_100_REVERSE
+        40.0*DISTANCE2PULSE    // FORWARD_40CM
     };
 
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
