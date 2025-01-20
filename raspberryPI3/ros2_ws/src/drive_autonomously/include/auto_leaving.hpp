@@ -8,6 +8,7 @@
 #include "interfaces/msg/speed_info.hpp"
 #include "interfaces/msg/motors_feedback.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/int32.hpp"
 
 
 #define STEER_RIGHT 1.0 
@@ -76,15 +77,15 @@ private:
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_leaving_finished_;
 
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr motors_feedback_subscription_;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_start_leaving_;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_start_leaving_;
     
     rclcpp::TimerBase::SharedPtr timer_;
     interfaces::msg::JoystickOrder car_order;
 
-    bool m_publishing, start, waiting;
+    bool m_publishing, start_straight, start_parallel, waiting;
     float m_current_distance, m_current_distance_limit;
 
-    void init_leaving(const std_msgs::msg::Bool & i);
+    void init_leaving(const std_msgs::msg::Int32 & i);
     void update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg);
     void timer_callback();
     void car_move(bool reverse = REVERSE, float steer = STEER_NEUTRAL, float speed = SPEED_NORMAL);

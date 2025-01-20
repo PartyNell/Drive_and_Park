@@ -128,7 +128,6 @@ private:
     rclcpp::Time current_time;
     rclcpp::Duration init_time  = rclcpp::Duration::from_seconds(0);
 
-
     // Publisher
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_finished_;
