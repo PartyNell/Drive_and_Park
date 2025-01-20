@@ -25,7 +25,6 @@ AutoParking::AutoParking()
     motors_feedback_subscription_ = this->create_subscription<interfaces::msg::MotorsFeedback>("/motors_feedback", 10, std::bind(&AutoParking::update_state, this, std::placeholders::_1));
     subscription_start_parking_ = this->create_subscription<std_msgs::msg::Bool>("start_parking", 10, std::bind(&AutoParking::init_parking, this, _1));
 
-   
     timer_ = this->create_wall_timer(50ms, std::bind(&AutoParking::timer_callback, this));
     RCLCPP_INFO(this->get_logger(), "auto_parking node READY");
 }
@@ -323,7 +322,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(true, 1.0); // Braquer à droite et reculer
+            car_move(true, 1.0, 0.25); // Braquer à droite et reculer
         }
         else if (waiting)
         {
