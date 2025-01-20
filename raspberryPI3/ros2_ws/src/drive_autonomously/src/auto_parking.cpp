@@ -71,6 +71,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_15CM");
             m_state = ParkingState::FORWARD_15CM;
             waiting = false;
+            m_publishing = true;
         }
         break;
 
@@ -178,6 +179,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             std_msgs::msg::Bool parking_finished;
             parking_finished.data = true; 
             publisher_parking_finished_->publish(parking_finished);
+
+            m_publishing = false;
         }
         break;
 

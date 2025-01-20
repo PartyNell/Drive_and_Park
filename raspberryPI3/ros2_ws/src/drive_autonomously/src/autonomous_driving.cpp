@@ -42,7 +42,7 @@ class AutonomousDriving : public rclcpp::Node
       subscriber_start_detection = this->create_subscription<std_msgs::msg::Bool>("/search_finish_initialization", 10, std::bind(&AutonomousDriving::init_search_state, this, _1));
       subscriber_detect_parking = this->create_subscription<std_msgs::msg::Int32>("/info_parking_place", 10, std::bind(&AutonomousDriving::detect_parking, this, _1));
       subscriber_parking_ok_ = this->create_subscription<std_msgs::msg::Bool>("parking_finished", 10, std::bind(&AutonomousDriving::wait_order, this, _1));
-      subscriber_leaving_ok_ = this->create_subscription<std_msgs::msg::Bool>("leaving_finished", 10, std::bind(&AutonomousDriving::wait_order_leaving, this, _1));
+      subscriber_leaving_ok_ = this->create_subscription<std_msgs::msg::Bool>("leaving_finished", 10, std::bind(&AutonomousDriving::switch_manual, this, _1));
 
       timer_ = this->create_wall_timer(50ms, std::bind(&AutonomousDriving::timer_callback, this));
 
@@ -230,8 +230,16 @@ class AutonomousDriving : public rclcpp::Node
       */
       parked = true;
       set_car_order(true, 0, 0.0, 0.0, false);
+      publisher_car_order_->publish(car_order);
     }
 
+    void switch_manual(const std_msgs::msg::Bool & leaved){
+      set_car_order(true, 0, 0.0, 0.0, false);
+      publisher_car_order_->publish(car_order);
+
+      leaving_in_progress = false;
+      manual = true;
+    }
 
     //TOOLS
     void set_car_order(bool start, int mode, float throttle, float steer, bool reverse){
@@ -249,7 +257,7 @@ class AutonomousDriving : public rclcpp::Node
     //Publishers
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_state_;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_parking_state_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_parking_state_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_leaving_state_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_search_parking;
 

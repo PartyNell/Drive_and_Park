@@ -32,7 +32,7 @@ AutoLeaving::AutoLeaving()
     : Node("auto_leaving")
 {
     m_publishing = false;
-    start = true;
+    start = false;
     waiting = false;
     m_current_distance = 0.0;
     m_state = LeavingState::IDLE;
