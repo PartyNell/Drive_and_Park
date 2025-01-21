@@ -10,6 +10,8 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/int32.hpp"
 
+#include "../../parkingspace_detection/include/variable.hpp"
+
 
 #define STEER_RIGHT 1.0 
 #define STEER_LEFT -1.0

@@ -31,7 +31,7 @@ class AutonomousDriving : public rclcpp::Node
       publisher_init_state_ = this->create_publisher<std_msgs::msg::Bool>("start_init", 10);
       publisher_search_parking = this->create_publisher<std_msgs::msg::Bool>("/start_search", 10);
       publisher_parking_state_ = this->create_publisher<std_msgs::msg::Int32>("start_parking", 10);
-      publisher_leaving_state_ = this->create_publisher<std_msgs::msg::Bool>("start_leaving", 10);
+      publisher_leaving_state_ = this->create_publisher<std_msgs::msg::Int32>("start_leaving", 10);
 
       //SUBSCRIBERS
       subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::init_autonomous_mode, this, _1));
@@ -42,7 +42,7 @@ class AutonomousDriving : public rclcpp::Node
       subscriber_start_detection = this->create_subscription<std_msgs::msg::Bool>("/search_finish_initialization", 10, std::bind(&AutonomousDriving::init_search_state, this, _1));
       subscriber_detect_parking = this->create_subscription<std_msgs::msg::Int32>("/info_parking_place", 10, std::bind(&AutonomousDriving::detect_parking, this, _1));
       subscriber_parking_ok_ = this->create_subscription<std_msgs::msg::Bool>("parking_finished", 10, std::bind(&AutonomousDriving::wait_order, this, _1));
-      subscriber_leaving_ok_ = this->create_subscription<std_msgs::msg::Bool>("leaving_finished", 10, std::bind(&AutonomousDriving::switch_manual, this, _1));
+      subscriber_leaving_ok_ = this->create_subscription<std_msgs::msg::Bool>("leaving_finished", 10, std::bind(&AutonomousDriving::finish_, this, _1));
 
       RCLCPP_INFO(this->get_logger(), "autonomous_driving node READY");  
     }
@@ -243,7 +243,7 @@ class AutonomousDriving : public rclcpp::Node
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_state_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_parking_state_;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_leaving_state_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_leaving_state_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_search_parking;
 
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscriber_autonomous_mode_;

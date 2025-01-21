@@ -32,7 +32,8 @@ AutoLeaving::AutoLeaving()
     : Node("auto_leaving")
 {
     m_publishing = false;
-    start = false;
+    start_straight = false;
+    start_parallel = false;
     waiting = false;
     m_current_distance = 0.0;
     m_state = LeavingState::IDLE;
@@ -62,7 +63,7 @@ void AutoLeaving::init_leaving(const std_msgs::msg::Int32 & i)
         start_parallel = true;
     } else {
         RCLCPP_INFO(this->get_logger(), "STOP Parking");
-        m_state = ParkingState::IDLE;
+        m_state = LeavingState::IDLE;
         m_current_distance = 0.0;
         waiting = false;
     }
