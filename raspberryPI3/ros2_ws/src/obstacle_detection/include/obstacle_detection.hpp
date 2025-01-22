@@ -59,7 +59,8 @@ private:
         static constexpr float STOP = 0.0;
         static constexpr float WALKING_PACE = 0.15;
         static constexpr float HALF_SPEED = 0.4;
-        static constexpr float NORMAL = 1.0;
+        static constexpr float NORMAL_DETECTION = 0.99;
+        static constexpr float NORMAL_NON_DETECTION = 1.0;
     };
 
     void timer_callback();

@@ -159,12 +159,16 @@ void ObstacleDetection::update_speed_info(
     else if (get_parkmod() == false &&
         sensor_value < THRESHOLD_CAREFUL)
     {
-        RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFULL !!!", orientation.c_str());
-        will_send_speed_ = true;
         if (is_front){
-            speed_value_front = SpeedCoefficient::NORMAL; 
+            if (speed_value_front != SpeedCoefficient::NORMAL_DETECTION)
+                RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFULL !!!", orientation.c_str());
+
+            speed_value_front = SpeedCoefficient::NORMAL_DETECTION; 
         } else {
-            speed_value_back = SpeedCoefficient::NORMAL; 
+            if (speed_value_back != SpeedCoefficient::NORMAL_DETECTION)
+               RCLCPP_INFO(this->get_logger(), "'%s' SOMETHING DETECTED, CAREFULL !!!", orientation.c_str());
+
+            speed_value_back = SpeedCoefficient::NORMAL_DETECTION; 
         }
     }
     else if (get_parkmod() == false)
@@ -172,9 +176,9 @@ void ObstacleDetection::update_speed_info(
         // No warning or message; speed stays NORMAL.
         will_send_speed_ = true;
         if (is_front)
-            speed_value_front = SpeedCoefficient::NORMAL; 
+            speed_value_front = SpeedCoefficient::NORMAL_NON_DETECTION; 
         else
-            speed_value_back = SpeedCoefficient::NORMAL;
+            speed_value_back = SpeedCoefficient::NORMAL_NON_DETECTION; 
     }
 }
 
