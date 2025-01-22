@@ -190,7 +190,14 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting)
         {    
-            // wait for any signal to park again
+            std_msgs::msg::Bool leaving_finished;
+            leaving_finished.data = true; 
+            publisher_leaving_finished_->publish(leaving_finished);
+
+            m_state = LeavingState::IDLE;
+
+            m_publishing = false;
+            start_straight = false;
         }
         break;
     

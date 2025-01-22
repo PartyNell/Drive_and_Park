@@ -190,7 +190,7 @@ class AutonomousDriving : public rclcpp::Node
       */
       parking_type = space_detected.data;
 
-      // RCLCPP_INFO(this->get_logger(), "PARKING TYPE : %d", parking_type);
+      RCLCPP_DEBUG(this->get_logger(), "PARKING TYPE : %d", parking_type);
 
       //STOP the car and wait 10 seconds
       set_car_order(true, 1, 0.0, 0.0, false);
@@ -211,8 +211,9 @@ class AutonomousDriving : public rclcpp::Node
       /*
         Once the car parked it switch to manual mode and stop the car
       */
+      parking_in_progress = false;
       parked = true;
-      set_car_order(true, 0, 0.0, 0.0, false);
+      set_car_order(true, 0, 0.0, 0.0, false););
     }
 
     void finish_(const std_msgs::msg::Bool & leaved){
@@ -221,7 +222,6 @@ class AutonomousDriving : public rclcpp::Node
       */
       //STOP the car
       set_car_order(true, 0, 0.0, 0.0, false);
-
 
       leaving_in_progress = false;
       manual = true;

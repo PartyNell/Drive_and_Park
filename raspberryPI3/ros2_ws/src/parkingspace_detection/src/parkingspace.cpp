@@ -127,8 +127,8 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 
 				} else {
 					message.data = static_cast<int32_t>(ParkingType::NONE);
-					RCLCPP_INFO(this->get_logger(), "Not a valid parking space");
-					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
+					RCLCPP_DEBUG(this->get_logger(), "Not a valid parking space");
+					RCLCPP_DEBUG(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
 				}
 
 				if(message.data != static_cast<int32_t>(ParkingType::NONE)){

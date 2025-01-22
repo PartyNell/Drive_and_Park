@@ -174,13 +174,14 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting)
         {    
-            start_straight = false;
-
             std_msgs::msg::Bool parking_finished;
             parking_finished.data = true; 
             publisher_parking_finished_->publish(parking_finished);
 
+            m_state = ParkingState::IDLE;
+
             m_publishing = false;
+            start_straight = false;
         }
         break;
 
