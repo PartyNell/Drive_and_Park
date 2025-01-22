@@ -26,6 +26,7 @@ class AutonomousDriving : public rclcpp::Node
     {
       //PUBLISHERS
       publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_car_order", 10);
+      publisher_park_leave_ = this->create_publisher<std_msgs::msg::Bool>("/parking_leaving_in_process", 10);
 
       //STATES publishers
       publisher_init_state_ = this->create_publisher<std_msgs::msg::Bool>("start_init", 10);
@@ -70,6 +71,10 @@ class AutonomousDriving : public rclcpp::Node
             std_msgs::msg::Int32 init_leaving;
             init_leaving.data = parking_type;
             publisher_leaving_state_->publish(init_leaving);
+
+            std_msgs::msg::Bool leaving_in_process;
+            leaving_in_process.data = true; 
+            publisher_park_leave_->publish(leaving_in_process);
 
             leaving_in_progress = true;
           }
@@ -204,6 +209,10 @@ class AutonomousDriving : public rclcpp::Node
       std_msgs::msg::Int32 parking;
       parking.data = parking_type; 
       publisher_parking_state_->publish(parking);
+
+      std_msgs::msg::Bool parking_in_process;
+      parking_in_process.data = true; 
+      publisher_park_leave_->publish(parking_in_process);
       
     }
 
@@ -213,7 +222,11 @@ class AutonomousDriving : public rclcpp::Node
       */
       parking_in_progress = false;
       parked = true;
-      set_car_order(true, 0, 0.0, 0.0, false););
+      set_car_order(true, 0, 0.0, 0.0, false);
+
+      std_msgs::msg::Bool parking_in_process;
+      parking_in_process.data = false; 
+      publisher_park_leave_->publish(parking_in_process);
     }
 
     void finish_(const std_msgs::msg::Bool & leaved){
@@ -222,6 +235,10 @@ class AutonomousDriving : public rclcpp::Node
       */
       //STOP the car
       set_car_order(true, 0, 0.0, 0.0, false);
+
+      std_msgs::msg::Bool leaving_in_process;
+      leaving_in_process.data = false; 
+      publisher_park_leave_->publish(leaving_in_process);
 
       leaving_in_progress = false;
       manual = true;
@@ -241,6 +258,7 @@ class AutonomousDriving : public rclcpp::Node
 
     //Publishers
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_park_leave_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_state_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_parking_state_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_leaving_state_;

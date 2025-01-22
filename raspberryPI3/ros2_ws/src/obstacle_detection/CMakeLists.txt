@@ -17,7 +17,7 @@ find_package(sensor_msgs REQUIRED)
 include_directories(include)
 
 add_executable(obstacle_detection src/obstacle_detection.cpp)
-ament_target_dependencies(obstacle_detection rclcpp interfaces sensor_msgs)
+ament_target_dependencies(obstacle_detection rclcpp interfaces sensor_msgs std_msgs)
 
 install(TARGETS
   obstacle_detection

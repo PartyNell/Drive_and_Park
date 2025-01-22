@@ -7,6 +7,7 @@
 #include "interfaces/msg/ultrasonic.hpp"
 #include "interfaces/msg/speed_info.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include <cmath>
 #include <vector>
 #include <utility>
@@ -43,6 +44,7 @@ private:
     rclcpp::Publisher<interfaces::msg::SpeedInfo>::SharedPtr publisher_;
     rclcpp::Subscription<interfaces::msg::Ultrasonic>::SharedPtr subscription_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr subscription_lidar_;
+    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_parking_leaving_;
     size_t count_;
 
     bool will_send_speed_;
@@ -64,6 +66,7 @@ private:
     };
 
     void timer_callback();
+    void selectSecurity(const std_msgs::msg::Bool::SharedPtr parking_leaving);
     void update_speed_info(bool is_front, int16_t sensor_value);
     void topic_callback(const interfaces::msg::Ultrasonic::SharedPtr msg);
     void laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);

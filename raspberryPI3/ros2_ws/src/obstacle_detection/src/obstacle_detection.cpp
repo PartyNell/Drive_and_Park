@@ -3,29 +3,23 @@
 ObstacleDetection::ObstacleDetection() 
     : Node("obstacle_detection"), 
         will_send_speed_(false), 
-        speed_value_front(SpeedCoefficient::NORMAL), 
-        speed_value_back(SpeedCoefficient::NORMAL), 
-        parkmod_(true), 
+        speed_value_front(SpeedCoefficient::NORMAL_NON_DETECTION), 
+        speed_value_back(SpeedCoefficient::NORMAL_NON_DETECTION), 
+        parkmod_(false), 
         is_margin_reach_back_(false),
         is_margin_reach_front_(false)
 {
-    // Create a subscription to the "/us_data" topic
-    subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>(
-        "/us_data", 10, std::bind(&ObstacleDetection::topic_callback, this, std::placeholders::_1));
-    
+    //SUBSCRIBERS
+    subscription_ = this->create_subscription<interfaces::msg::Ultrasonic>("/us_data", 10, std::bind(&ObstacleDetection::topic_callback, this, std::placeholders::_1));
+    subscription_lidar_ = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", 10, std::bind(&ObstacleDetection::laserScanCallback, this, std::placeholders::_1));
+    subscription_parking_leaving_ = this->create_subscription<std_msgs::msg::Bool>("/parking_leaving_in_process", 10, std::bind(&ObstacleDetection::selectSecurity, this, std::placeholders::_1));
+
+    //PUBLISHERS
     publisher_ = this->create_publisher<interfaces::msg::SpeedInfo>("/speed_info", 10);
     
     timer_ = this->create_wall_timer(50ms, std::bind(&ObstacleDetection::timer_callback, this));
 
     RCLCPP_INFO(this->get_logger(), "obstacle_detection node READY");
-
-    //////////////////////////////////////////////////////////////////////
-    subscription_lidar_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-            "/scan",  // Nom du topic
-            10,       // QoS
-            std::bind(
-                &ObstacleDetection::laserScanCallback, this, std::placeholders::_1));
-    //////////////////////////////////////////////////////////////////
 }
 
 void ObstacleDetection::timer_callback()
@@ -41,18 +35,25 @@ void ObstacleDetection::timer_callback()
     }
 }
 
+void ObstacleDetection::selectSecurity(const std_msgs::msg::Bool::SharedPtr parking_leaving){
+    /*
+        When the car is parking or is leaving a parking space then the Park Security is activated.
+    */
+    set_parkmod(parking_leaving->data);
+}
+
 void ObstacleDetection::update_speed_info(
     bool is_front, int16_t sensor_value)
 {
     std::string orientation = is_front ? "[FRONT]" : "[BACK]";
   
-///////////////////////////////////////////////////////////////////////////////////
-    /*Park security
-    On the "parkmod", compare ultrasonic sensor with the 15cm margin and 30cm with the lidar. 
-    Stop the car if the direction is the same than the ulstrasonic sensor detection
-    */
     if (get_parkmod() == true)
     {
+        /*
+            PARK SECURITY :
+            On the "parkmod", compare ultrasonic sensor with the 15cm margin and 30cm with the lidar. 
+            Stop the car if the direction is the same than the ulstrasonic sensor detection
+        */
         RCLCPP_DEBUG(this->get_logger(), "parkmod 1 :");
         if (sensor_value < THRESHOLD_PARK_STOP)
         {
@@ -98,16 +99,17 @@ void ObstacleDetection::update_speed_info(
                 // No warning or message; speed stays NORMAL.
             will_send_speed_ = true;
             if (is_front)
-                speed_value_front = SpeedCoefficient::NORMAL; 
+                speed_value_front = SpeedCoefficient::NORMAL_NON_DETECTION; 
             else
-               speed_value_back = SpeedCoefficient::NORMAL;
+               speed_value_back = SpeedCoefficient::NORMAL_NON_DETECTION;
         }
     }
 
-////////////////////////////////////////////////////////////////////////////////
-     
-    else if (get_parkmod() == false &&
-        sensor_value < THRESHOLD_STOP)
+    /*
+        DRIVE SECURITY :
+        If the parkmod is false then the margin are evaluate with the ultrasonic sensors
+    */
+    else if (sensor_value < THRESHOLD_STOP)
     {
         will_send_speed_ = true;
         if (is_front){
@@ -123,8 +125,7 @@ void ObstacleDetection::update_speed_info(
         }
     }
     
-    else if (get_parkmod() == false &&
-        sensor_value < THRESHOLD_SLOW)
+    else if (sensor_value < THRESHOLD_SLOW)
     {
         will_send_speed_ = true;
         if (is_front){
@@ -140,8 +141,7 @@ void ObstacleDetection::update_speed_info(
         }
     }
     
-    else if (get_parkmod() == false &&
-        sensor_value < THRESHOLD_FIRST_SLOW)
+    else if (sensor_value < THRESHOLD_FIRST_SLOW)
     {
         will_send_speed_ = true;
         if (is_front){
@@ -156,8 +156,7 @@ void ObstacleDetection::update_speed_info(
             speed_value_back = SpeedCoefficient::HALF_SPEED; 
         }
     }
-    else if (get_parkmod() == false &&
-        sensor_value < THRESHOLD_CAREFUL)
+    else if (sensor_value < THRESHOLD_CAREFUL)
     {
         if (is_front){
             if (speed_value_front != SpeedCoefficient::NORMAL_DETECTION)
@@ -171,7 +170,7 @@ void ObstacleDetection::update_speed_info(
             speed_value_back = SpeedCoefficient::NORMAL_DETECTION; 
         }
     }
-    else if (get_parkmod() == false)
+    else
     {
         // No warning or message; speed stays NORMAL.
         will_send_speed_ = true;
@@ -193,12 +192,10 @@ void ObstacleDetection::topic_callback(const interfaces::msg::Ultrasonic::Shared
 }
 
 /////////////Set the lidar detection//////////////////////
-/* 
-*/
+
+
 void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
 {
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
-    
     std::vector<std::pair<float, float>> cartesian_coords; // Pour stocker les coordonnées cartésiennes (x, y)
     constexpr float degree_increment = M_PI / 180.0; // 1° en radians
     constexpr float precision_cm = 0.01; // Précision en mètres (1 cm)
@@ -281,7 +278,6 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
     }
 }
 
-///////////////////////////////////
 
 
 int main(int argc, char *argv[])
