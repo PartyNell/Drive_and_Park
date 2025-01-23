@@ -59,13 +59,13 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             {
             case ParkingType::STRAIGHT:
                 m_state = ParkingState::FORWARD_15CM;
-                RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_15CM");            
                 break;
+                RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_15CM, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);            
             
             case ParkingType::PARALLEL:
                 m_state = ParkingState::REVERSE_1M;
-                RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_1M");     
                 break;
+                RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_1M, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);     
             
             default:
                 break;
@@ -83,8 +83,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_TO_45DEG_STEER_RIGHT");
             m_state = ParkingState::REVERSE_TO_45DEG_STEER_RIGHT;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_TO_45DEG_STEER_RIGHT, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -98,8 +98,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_60CM_STEER_LEFT_50");
             m_state = ParkingState::FORWARD_60CM_STEER_LEFT_50;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_60CM_STEER_LEFT_50, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -113,8 +113,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_50CM_STEER_RIGHT_40");
             m_state = ParkingState::REVERSE_50CM_STEER_RIGHT_40;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_50CM_STEER_RIGHT_40, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -128,8 +128,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS_STRAIGHT");
             m_state = ParkingState::STRAIGHTEN_WHEELS_STRAIGHT;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS_STRAIGHT, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -143,8 +143,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FINAL_REVERSE_80CM");
             m_state = ParkingState::FINAL_REVERSE_80CM;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FINAL_REVERSE_80CM, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -158,8 +158,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> PARKED");
             m_state = ParkingState::PARKED;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> PARKED, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
 
             std_msgs::msg::Bool parking_finished;
@@ -193,8 +193,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STOP_STEER_LEFT_100");
             m_state = ParkingState::STOP_STEER_LEFT_100;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STOP_STEER_LEFT_100, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -205,10 +205,10 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             waiting = true;
             car_move(false, -1.0, 0.0); // Braquer à fond à gauche (stopping = mouvement neutre)
         }
-        else if (waiting)
+        else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_65CM");
             m_state = ParkingState::FORWARD_65CM;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_65CM, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -222,8 +222,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> TURN_BEFORE_REVERSE");
             m_state = ParkingState::TURN_BEFORE_REVERSE;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> TURN_BEFORE_REVERSE, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -237,8 +237,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STOP_STEER_RIGHT_100");
             m_state = ParkingState::STOP_STEER_RIGHT_100;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STOP_STEER_RIGHT_100, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -249,10 +249,10 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             waiting = true;
             car_move(false, 1.0, 0.0); // Braquer à fond à droite (stopping)
         }
-        else if (waiting)
+        else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_90CM");
             m_state = ParkingState::REVERSE_90CM;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_90CM, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -266,8 +266,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS_PARALLEL");
             m_state = ParkingState::STRAIGHTEN_WHEELS_PARALLEL;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS_PARALLEL, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -279,10 +279,10 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             m_current_distance = 0.0;
             car_move(false, 0.0, 0.0);
         }
-        else if(waiting)
+        else if (waiting && m_current_distance >= m_current_distance_limit)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_20CM");
             m_state = ParkingState::REVERSE_20CM;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_20CM, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -296,8 +296,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STEER_LEFT_100_REVERSE_1M");
             m_state = ParkingState::STEER_LEFT_100_REVERSE_1M;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STEER_LEFT_100_REVERSE_1M, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -311,8 +311,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STEER_RIGHT_100_REVERSE");
             m_state = ParkingState::STEER_RIGHT_100_REVERSE;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STEER_RIGHT_100_REVERSE, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -322,12 +322,12 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(true, 1.0, 0.25); // Braquer à droite et reculer
+            car_move(true, 1.0, 0.2); // Braquer à droite et reculer
         }
-        else if (waiting)
+        else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_40CM");
             m_state = ParkingState::FORWARD_40CM;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_40CM, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
         }
         break;
@@ -341,8 +341,39 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> PARKED");
+            m_state = ParkingState::STEER_LEFT_FINAL;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STEER_LEFT_FINAL, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
+            waiting = false;
+        }
+        break;
+
+
+    case ParkingState::STEER_LEFT_FINAL:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(false, -1.0, 0.2); // Braquer à droite et reculer
+        }
+        else if (waiting && m_current_distance >= m_current_distance_limit)
+        {
+            m_state = ParkingState::REVERSE_STRAIGHT_30;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_STRAIGHT_30, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
+            waiting = false;
+        }
+        break;
+
+    case ParkingState::REVERSE_STRAIGHT_30:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(true); // Avancer
+        }
+        else if (waiting && m_current_distance >= m_current_distance_limit)
+        {
             m_state = ParkingState::PARKED;
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> PARKED, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
 
             std_msgs::msg::Bool parking_finished;

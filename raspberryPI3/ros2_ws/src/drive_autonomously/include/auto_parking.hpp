@@ -54,7 +54,9 @@ private:
         REVERSE_20CM,               // Reculer de 20 cm
         STEER_LEFT_100_REVERSE_1M,  // Braquer à gauche et reculer de 1m
         STEER_RIGHT_100_REVERSE,    // Braquer à droite et reculer
-        FORWARD_40CM                // Avancer de 40 cm
+        FORWARD_40CM,                // Avancer de 40 cm
+        STEER_LEFT_FINAL,         
+        REVERSE_STRAIGHT_30         // recule de 30cm tout droit
     };
 
     static constexpr double ParkingDistances[] = {
@@ -80,8 +82,10 @@ private:
         0.0*DISTANCE2PULSE,    // STRAIGHTEN_WHEELS_PARALLEL
         40.0*DISTANCE2PULSE,   // REVERSE_20CM
         80.0*DISTANCE2PULSE,  // STEER_LEFT_100_REVERSE_1M
-        15.0*DISTANCE2PULSE,    // STEER_RIGHT_100_REVERSE
-        40.0*DISTANCE2PULSE    // FORWARD_40CM
+        10.0*DISTANCE2PULSE,    // STEER_RIGHT_100_REVERSE
+        55.0*DISTANCE2PULSE,    // FORWARD_40CM
+        10.0*DISTANCE2PULSE,    // STEER_LEFT_FINAL
+        30.0*DISTANCE2PULSE,   // REVERSE_STRAIGHT_30
     };
 
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
