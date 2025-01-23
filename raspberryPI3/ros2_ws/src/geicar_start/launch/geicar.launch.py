@@ -63,6 +63,36 @@ def generate_launch_description():
         emulate_tty=True
     )
 
+    init_autonomous_node = Node(
+        package="drive_autonomously",
+        executable="init_autonomous_node",
+        emulate_tty=True
+    )
+
+    autonomous_driving_node = Node(
+        package="drive_autonomously",
+        executable="autonomous_driving",
+        emulate_tty=True
+    )
+
+    search_parking_node = Node(
+        package="parkingspace_detection",
+        executable="parking_space",
+        emulate_tty=True
+    )
+
+    parking_node = Node(
+        package="drive_autonomously",
+        executable="auto_parking",
+        emulate_tty=True
+    )
+
+    leaving_node = Node(
+        package="drive_autonomously",
+        executable="auto_leaving",
+        emulate_tty=True
+    ) 
+
     ld.add_action(joystick_node)
     ld.add_action(joystick_to_cmd_node)
     ld.add_action(can_rx_node)
@@ -72,5 +102,10 @@ def generate_launch_description():
     ld.add_action(system_check_node)
     ld.add_action(obstacle_detection_node)
     ld.add_action(car_command_node)
+    ld.add_action(init_autonomous_node)
+    ld.add_action(autonomous_driving_node)
+    ld.add_action(search_parking_node)
+    ld.add_action(parking_node)
+    ld.add_action(leaving_node)
 
     return ld
