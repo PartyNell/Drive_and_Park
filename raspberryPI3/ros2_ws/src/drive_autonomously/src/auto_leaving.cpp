@@ -17,7 +17,8 @@ AutoLeaving::AutoLeaving()
     : Node("auto_leaving")
 {
     m_publishing = false;
-    start = true;
+    start_straight = false;
+    start_parallel = false;
     waiting = false;
     m_current_distance = 0.0;
 
@@ -34,20 +35,23 @@ AutoLeaving::AutoLeaving()
     motors_feedback_subscription_ = this->create_subscription<interfaces::msg::MotorsFeedback>(
         "/motors_feedback", 10, std::bind(&AutoLeaving::update_state, this, std::placeholders::_1));
     
-    subscription_start_leaving_ = this->create_subscription<std_msgs::msg::Bool>("start_leaving", 10, std::bind(&AutoLeaving::init_leaving, this, std::placeholders::_1));
+    subscription_start_leaving_ = this->create_subscription<std_msgs::msg::Int32>("start_leaving", 10, std::bind(&AutoLeaving::init_leaving, this, std::placeholders::_1));
        
     timer_ = this->create_wall_timer(50ms, std::bind(&AutoLeaving::timer_callback, this));
     RCLCPP_INFO(this->get_logger(), "auto_leaving node READY");
 }
 
-void AutoLeaving::init_leaving(const std_msgs::msg::Bool & i)
+void AutoLeaving::init_leaving(const std_msgs::msg::Int32 & i)
 {
-    start = i.data;
 
-    if(start){
-        RCLCPP_INFO(this->get_logger(), "START Leaving");
+    if(i.data == static_cast<int32_t>(ParkingType::PERPENDICULAR)){ // STRAIGHT PARKING
+        RCLCPP_INFO(this->get_logger(), "START Straight Leaving");
+        start_straight = true;
+    } else if (i.data == static_cast<int32_t>(ParkingType::PARALLEL)) {
+        RCLCPP_INFO(this->get_logger(), "START Parallel Leaving");
+        start_parallel = true;
     } else {
-        RCLCPP_INFO(this->get_logger(), "STOP Leaving");
+        RCLCPP_INFO(this->get_logger(), "STOP Parking");
         m_state = LeavingState::IDLE;
         m_current_distance = 0.0;
         waiting = false;
@@ -64,7 +68,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
     switch (m_state)
     {
     case LeavingState::IDLE:
-        if (start)
+        if (start_straight)
         {    
             switch (m_parking_type)
             {
@@ -190,7 +194,14 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting)
         {    
-            // wait for any signal to park again
+            std_msgs::msg::Bool leaving_finished;
+            leaving_finished.data = true; 
+            publisher_leaving_finished_->publish(leaving_finished);
+
+            m_state = LeavingState::IDLE;
+
+            m_publishing = false;
+            start_straight = false;
         }
         break;
 

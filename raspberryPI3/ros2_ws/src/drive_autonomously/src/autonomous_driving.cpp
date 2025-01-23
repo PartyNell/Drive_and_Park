@@ -26,12 +26,13 @@ class AutonomousDriving : public rclcpp::Node
     {
       //PUBLISHERS
       publisher_car_order_ = this->create_publisher<interfaces::msg::JoystickOrder>("autonomous_car_order", 10);
+      publisher_park_leave_ = this->create_publisher<std_msgs::msg::Bool>("/parking_leaving_in_process", 10);
 
       //STATES publishers
       publisher_init_state_ = this->create_publisher<std_msgs::msg::Bool>("start_init", 10);
       publisher_search_parking = this->create_publisher<std_msgs::msg::Bool>("/start_search", 10);
       publisher_parking_state_ = this->create_publisher<std_msgs::msg::Int32>("start_parking", 10);
-      publisher_leaving_state_ = this->create_publisher<std_msgs::msg::Bool>("start_leaving", 10);
+      publisher_leaving_state_ = this->create_publisher<std_msgs::msg::Int32>("start_leaving", 10);
 
       //SUBSCRIBERS
       subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::init_autonomous_mode, this, _1));
@@ -42,9 +43,7 @@ class AutonomousDriving : public rclcpp::Node
       subscriber_start_detection = this->create_subscription<std_msgs::msg::Bool>("/search_finish_initialization", 10, std::bind(&AutonomousDriving::init_search_state, this, _1));
       subscriber_detect_parking = this->create_subscription<std_msgs::msg::Int32>("/info_parking_place", 10, std::bind(&AutonomousDriving::detect_parking, this, _1));
       subscriber_parking_ok_ = this->create_subscription<std_msgs::msg::Bool>("parking_finished", 10, std::bind(&AutonomousDriving::wait_order, this, _1));
-      subscriber_leaving_ok_ = this->create_subscription<std_msgs::msg::Bool>("leaving_finished", 10, std::bind(&AutonomousDriving::wait_order_leaving, this, _1));
-
-      timer_ = this->create_wall_timer(50ms, std::bind(&AutonomousDriving::timer_callback, this));
+      subscriber_leaving_ok_ = this->create_subscription<std_msgs::msg::Bool>("leaving_finished", 10, std::bind(&AutonomousDriving::finish_, this, _1));
 
       RCLCPP_INFO(this->get_logger(), "autonomous_driving node READY");  
     }
@@ -53,7 +52,8 @@ class AutonomousDriving : public rclcpp::Node
 
     void init_autonomous_mode(const interfaces::msg::JoystickOrder & joystick){
       /*
-        Initialization of the Autonomous driving mode. Should be executed if the mode switched to Autonomous
+        Initialization of the Autonomous driving mode. Should be executed if the mode switched to Autonomous.
+        If the car is parked then it launch the leave parking function
       */
       if(mode != joystick.mode){
         mode = joystick.mode;
@@ -68,9 +68,13 @@ class AutonomousDriving : public rclcpp::Node
             init_in_progress = true;
           } else if (parked) {
             //START leave parking protocole
-            std_msgs::msg::Bool init_leaving;
-            init_leaving.data = true;
+            std_msgs::msg::Int32 init_leaving;
+            init_leaving.data = parking_type;
             publisher_leaving_state_->publish(init_leaving);
+
+            std_msgs::msg::Bool leaving_in_process;
+            leaving_in_process.data = true; 
+            publisher_park_leave_->publish(leaving_in_process);
 
             leaving_in_progress = true;
           }
@@ -78,6 +82,7 @@ class AutonomousDriving : public rclcpp::Node
           search_in_progress = false;
           parking_in_progress = false;
           manual = false;
+          parked = false;
 
         } else if (mode != 1){
           if(init_in_progress){
@@ -159,7 +164,6 @@ class AutonomousDriving : public rclcpp::Node
         }
     }
 
-
     void computeDistance(const interfaces::msg::MotorsFeedback & motorsFeedback)
     {
       if (search_in_progress && mode == 1)
@@ -183,21 +187,6 @@ class AutonomousDriving : public rclcpp::Node
 
     }
 
-    void wait_order_leaving(const std_msgs::msg::Bool & leaving)
-    {
-      if(leaving.data){
-        RCLCPP_INFO(this->get_logger(), "Leaving Parking Space SUCCEED");
-      } else {
-        RCLCPP_INFO(this->get_logger(), "Leaving Parking SpaceFAILED");
-      }
-    }
-
-    void timer_callback()
-    {
-      if((search_in_progress) && mode==1)
-        publisher_car_order_->publish(car_order);
-    }
-
     void detect_parking(const std_msgs::msg::Int32 & space_detected){
       /*
         If a place as been detected then the protocol is throw
@@ -206,11 +195,10 @@ class AutonomousDriving : public rclcpp::Node
       */
       parking_type = space_detected.data;
 
-      // RCLCPP_INFO(this->get_logger(), "PARKING TYPE : %d", parking_type);
+      RCLCPP_DEBUG(this->get_logger(), "PARKING TYPE : %d", parking_type);
 
       //STOP the car and wait 10 seconds
       set_car_order(true, 1, 0.0, 0.0, false);
-      publisher_car_order_->publish(car_order);
 
       rclcpp::sleep_for(std::chrono::seconds(5));
 
@@ -221,6 +209,10 @@ class AutonomousDriving : public rclcpp::Node
       std_msgs::msg::Int32 parking;
       parking.data = parking_type; 
       publisher_parking_state_->publish(parking);
+
+      std_msgs::msg::Bool parking_in_process;
+      parking_in_process.data = true; 
+      publisher_park_leave_->publish(parking_in_process);
       
     }
 
@@ -228,10 +220,29 @@ class AutonomousDriving : public rclcpp::Node
       /*
         Once the car parked it switch to manual mode and stop the car
       */
+      parking_in_progress = false;
       parked = true;
       set_car_order(true, 0, 0.0, 0.0, false);
+
+      std_msgs::msg::Bool parking_in_process;
+      parking_in_process.data = false; 
+      publisher_park_leave_->publish(parking_in_process);
     }
 
+    void finish_(const std_msgs::msg::Bool & leaved){
+      /*
+        Once the car leaved the parking space the car stop and switch to manual mode
+      */
+      //STOP the car
+      set_car_order(true, 0, 0.0, 0.0, false);
+
+      std_msgs::msg::Bool leaving_in_process;
+      leaving_in_process.data = false; 
+      publisher_park_leave_->publish(leaving_in_process);
+
+      leaving_in_progress = false;
+      manual = true;
+    }
 
     //TOOLS
     void set_car_order(bool start, int mode, float throttle, float steer, bool reverse){
@@ -240,17 +251,17 @@ class AutonomousDriving : public rclcpp::Node
       car_order.throttle = throttle;
       car_order.steer = steer;
       car_order.reverse = reverse;
+
+      publisher_car_order_->publish(car_order);
     }
 
-    
-
-    rclcpp::TimerBase::SharedPtr timer_;
 
     //Publishers
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_park_leave_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_state_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_parking_state_;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_leaving_state_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_leaving_state_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_search_parking;
 
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscriber_autonomous_mode_;
