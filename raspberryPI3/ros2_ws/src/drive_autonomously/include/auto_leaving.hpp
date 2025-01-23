@@ -17,12 +17,13 @@
 #define STEER_LEFT -1.0
 #define STEER_HALF_LEFT -0.5
 #define STEER_NEUTRAL 0.0
-#define SPEED_TEST 0.25
+#define SPEED_SLOW 0.25
 #define SPEED_NORMAL 0.3
 #define SPEED_STOP 0.0
 #define FORWARD false
 #define REVERSE true
 
+#define DISTANCE2PULSE (36/(20*3.14))
 
 class AutoLeaving : public rclcpp::Node
 {
@@ -30,49 +31,55 @@ public:
     AutoLeaving();
 
 private:
+
+    enum class ParkingType
+    {
+        STRAIGHT,
+        PARALLEL
+    };
+    
     // Énumération pour représenter les états de l'algorithme de Leaving automatique
     enum class LeavingState
     {
-        // Change the state
-        /*
-        IDLE,               // En attente
-        FORWARD_15CM,       // Avancer de 15 cm
-        REVERSE_TO_45DEG_STEER_RIGHT,   // Braquer à 100% à droite et Reculer jusqu'à être à 45° (1.25m)
-        FORWARD_60CM_STEER_LEFT_50,       //  Braquer à 50% à gauche et Avancer de 60 cm
-        REVERSE_80CM_STEER_RIGHT_100,       // Braquer à 100% à droite et Reculer de 80 cm
-        STRAIGHTEN_WHEELS,  // Mettre les roues droites
-        FINAL_REVERSE_80CM  // Reculer de 80 cm (final)
-        */
+        // SHARED
         IDLE,
+        LEFT_PARKING_SPACE,
+
+        // STRAIGHT LEAVING STATE
         STRAIGHTEN_WHEELS,
         BEGIN_FORWARD_80CM,
         FORWARD_80CM_STEER_RIGHT,
         CHANGE_WHEELS,
         REVERSE_60CM_STEER_HALF_LEFT,
         FINAL_FORWARD_125CM_STEER_RIGHT,
-        LEFT_PARKING_SPACE
+
+        // PARALLEL LEAVING STATE
+        REVERSE_30_STEER_RIGHT,
+        TURN_RIGHT_2_LEFT,
+        FORWARD_110_STEER_LEFT,
+        FORWARD_110_STEER_RIGHT
     };
 
     static constexpr double LeavingDistances[] = {
-        //Change the value here also
-        /*
-        0.0,    // IDLE
-        15.0,   // FORWARD_15CM
-        125.0,  // REVERSE_TO_45DEG_STEER_RIGHT
-        60.0,   // FORWARD_60CM_STEER_LEFT_50
-        80.0,   // REVERSE_80CM_STEER_RIGHT_100
-        0.0,    // STRAIGHTEN_WHEELS
-        80.0    // FINAL_REVERSE_80CM
-        */
         
+        // SHARED 
         0.0,    // IDLE
+        0.0,    // LEFT_PARKING_SPACE
+
+        // STRAIGHT
         0.0,   // STRAIGHTEN_WHEELS
         15.0,   // BEGIN_FORWARD_80CM
         80.0,  // FORWARD_80CM_STEER_RIGHT
         20.0, // CHANGE_WHEELS
         40.0,   // REVERSE_60CM_STEER_HALF_LEFT
         60.0,   // FINAL_FORWARD_125CM_STEER_RIGHT
-        0.0
+       
+
+        // PARALLEL
+        30.0*DISTANCE2PULSE,   // REVERSE_30_STEER_RIGHT
+        15.0*DISTANCE2PULSE,    // TURN_RIGHT_2_LEFT 
+        90.0*DISTANCE2PULSE,   // FORWARD_110_STEER_LEFT
+        160.0*DISTANCE2PULSE  // FORWARD_110_STEER_RIGHT
     };
 
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
@@ -94,6 +101,7 @@ private:
     void car_stop();
 
     LeavingState m_state;
+    ParkingType m_parking_type;
     
 };
 

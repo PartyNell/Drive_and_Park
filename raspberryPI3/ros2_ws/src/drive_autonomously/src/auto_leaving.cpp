@@ -2,20 +2,6 @@
 
 using namespace std::chrono_literals;
 
-
-/*
-A changer !!!
-- quand trouvée, avancer de 15cm
-- braquer 100% à droite
-- reculer jusqu’à être à 45° ⇒ 125cm
-- braquer à gauche à 50%
-- avancer pendant 60cm
-- braquer à 100% à droite
-- reculer de  80 cm
-- mettre les roues droites
-- reculer de 80cm
-*/
-
 /*
 - mettre les roues droites
 - avancer de 80cm
@@ -25,7 +11,6 @@ A changer !!!
 - reculer pendant 60cm (45°)
 - braquer 100% à droite
 - avancer jusqu’à être droit  ⇒ 125cm
-
 */
 
 AutoLeaving::AutoLeaving() 
@@ -36,6 +21,10 @@ AutoLeaving::AutoLeaving()
     start_parallel = false;
     waiting = false;
     m_current_distance = 0.0;
+
+    // A INIT SELON L'ORDREs
+    m_parking_type = ParkingType::PARALLEL;
+
     m_state = LeavingState::IDLE;
     m_current_distance_limit = LeavingDistances[static_cast<int>(m_state)];
     
@@ -81,18 +70,33 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
     case LeavingState::IDLE:
         if (start_straight)
         {    
-            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS");
-            m_state = LeavingState::STRAIGHTEN_WHEELS;
+            switch (m_parking_type)
+            {
+            case ParkingType::STRAIGHT:
+                m_state = LeavingState::STRAIGHTEN_WHEELS;
+                break;
+                RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS, Distance: %f", LeavingDistances[static_cast<int>(m_state)]);            
+            
+            case ParkingType::PARALLEL:
+                m_state = LeavingState::REVERSE_30_STEER_RIGHT;
+                break;
+                RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_30_STEER_RIGHT, Distance: %f", LeavingDistances[static_cast<int>(m_state)]);     
+            
+            default:
+                break;
+            }
             waiting = false;
         }
         break;
+
+        
 
     case LeavingState::STRAIGHTEN_WHEELS:
         if (!waiting)
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(FORWARD, 0.0, SPEED_STOP);
+            car_move(FORWARD, STEER_NEUTRAL, SPEED_STOP);
         }
         else if(waiting)
         {    
@@ -107,7 +111,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(FORWARD, 0.0, SPEED_NORMAL); 
+            car_move(FORWARD, STEER_NEUTRAL, SPEED_NORMAL); 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
@@ -122,7 +126,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(FORWARD, STEER_RIGHT, SPEED_TEST);
+            car_move(FORWARD, STEER_RIGHT, SPEED_SLOW);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
@@ -137,7 +141,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(FORWARD, STEER_LEFT, SPEED_TEST);
+            car_move(FORWARD, STEER_LEFT, SPEED_SLOW);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
@@ -152,7 +156,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(REVERSE, STEER_LEFT, SPEED_TEST);
+            car_move(REVERSE, STEER_LEFT, SPEED_SLOW);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
@@ -200,6 +204,74 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             start_straight = false;
         }
         break;
+
+    // PARALLEL
+
+    case LeavingState::REVERSE_30_STEER_RIGHT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(REVERSE, STEER_RIGHT, SPEED_NORMAL);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> TURN_RIGHT_2_LEFT");
+            m_state = LeavingState::TURN_RIGHT_2_LEFT;
+            waiting = false;
+        }
+        break;
+
+        case LeavingState::TURN_RIGHT_2_LEFT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(REVERSE, STEER_LEFT, SPEED_SLOW);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_110_STEER_LEFT");
+            m_state = LeavingState::FORWARD_110_STEER_LEFT;
+            waiting = false;
+        }
+        break;
+
+    case LeavingState::FORWARD_110_STEER_LEFT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(FORWARD, STEER_LEFT, SPEED_NORMAL);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_110_STEER_RIGHT");
+            m_state = LeavingState::FORWARD_110_STEER_RIGHT;
+            waiting = false;
+        }
+        break;
+
+    case LeavingState::FORWARD_110_STEER_RIGHT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(FORWARD, STEER_RIGHT, SPEED_NORMAL);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> LEFT_PARKING_SPACE");
+            m_state = LeavingState::LEFT_PARKING_SPACE;
+            waiting = false;
+
+            std_msgs::msg::Bool leaving_finished;
+            leaving_finished.data = true; 
+            publisher_leaving_finished_->publish(leaving_finished);
+        }
+        break;
+
+    
     
     default:
         break;
