@@ -249,7 +249,7 @@ class AutonomousDriving : public rclcpp::Node
     //Publishers
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_init_state_;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_parking_state_;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_parking_state_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_leaving_state_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_search_parking;
 

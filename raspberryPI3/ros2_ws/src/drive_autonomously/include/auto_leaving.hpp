@@ -52,6 +52,7 @@ private:
 
         // PARALLEL LEAVING STATE
         REVERSE_30_STEER_RIGHT,
+        TURN_RIGHT_2_LEFT,
         FORWARD_110_STEER_LEFT,
         FORWARD_110_STEER_RIGHT
     };
@@ -73,8 +74,9 @@ private:
 
         // PARALLEL
         30.0*DISTANCE2PULSE,   // REVERSE_30_STEER_RIGHT
-        110.0*DISTANCE2PULSE,   // FORWARD_110_STEER_LEFT
-        110.0*DISTANCE2PULSE  // FORWARD_110_STEER_RIGHT
+        15.0*DISTANCE2PULSE,    // TURN_RIGHT_2_LEFT 
+        90.0*DISTANCE2PULSE,   // FORWARD_110_STEER_LEFT
+        160.0*DISTANCE2PULSE  // FORWARD_110_STEER_RIGHT
     };
 
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;

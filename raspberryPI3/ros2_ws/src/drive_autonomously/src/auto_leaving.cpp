@@ -205,6 +205,21 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> TURN_RIGHT_2_LEFT");
+            m_state = LeavingState::TURN_RIGHT_2_LEFT;
+            waiting = false;
+        }
+        break;
+
+        case LeavingState::TURN_RIGHT_2_LEFT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(REVERSE, STEER_LEFT, SPEED_SLOW);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
             RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_110_STEER_LEFT");
             m_state = LeavingState::FORWARD_110_STEER_LEFT;
             waiting = false;
@@ -216,7 +231,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(REVERSE, STEER_LEFT, SPEED_NORMAL);
+            car_move(FORWARD, STEER_LEFT, SPEED_NORMAL);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
@@ -231,7 +246,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(REVERSE, STEER_LEFT, SPEED_NORMAL);
+            car_move(FORWARD, STEER_RIGHT, SPEED_NORMAL);
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
