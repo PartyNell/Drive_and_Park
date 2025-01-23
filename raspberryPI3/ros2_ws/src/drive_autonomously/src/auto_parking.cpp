@@ -8,8 +8,7 @@ AutoParking::AutoParking()
     : Node("auto_parking")
 {
     m_publishing = false;
-    start_straight = false;
-    start_parallel = false;
+    start = false;
     waiting = false;
     m_current_distance = 0.0;
 
@@ -35,10 +34,12 @@ void AutoParking::init_parking(const std_msgs::msg::Int32 & i)
 
     if(i.data == static_cast<int32_t>(ParkingType::PERPENDICULAR)){ // STRAIGHT PARKING
         RCLCPP_INFO(this->get_logger(), "START Straight Parking");
-        start_straight = true;
+        start = true;
+        m_parking_type = ParkingType::PERPENDICULAR;
     } else if (i.data == static_cast<int32_t>(ParkingType::PARALLEL)) {
         RCLCPP_INFO(this->get_logger(), "START Parallel Parking");
-        start_parallel = true;
+        start = true;
+        m_parking_type = ParkingType::PARALLEL;
     } else {
         RCLCPP_INFO(this->get_logger(), "STOP Parking");
         m_state = ParkingState::IDLE;
@@ -57,11 +58,11 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
     switch (m_state)
     {
     case ParkingState::IDLE:
-        if (start_straight)
+        if (start)
         {    
             switch (m_parking_type)
             {
-            case ParkingType::STRAIGHT:
+            case ParkingType::PERPENDICULAR:
                 m_state = ParkingState::FORWARD_15CM;
                 break;
                 RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_15CM, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);            
@@ -78,6 +79,8 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             m_publishing = true;
         }
         break;
+
+    // STRAIGHT PARKING
 
     case ParkingState::FORWARD_15CM:
         if (!waiting)
@@ -185,7 +188,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             m_state = ParkingState::IDLE;
 
             m_publishing = false;
-            start_straight = false;
+            start = false;
         }
         break;
 
@@ -383,10 +386,6 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             m_state = ParkingState::PARKED;
             RCLCPP_INFO(this->get_logger(), "NEW STATE ===> PARKED, Distance: %f", ParkingDistances[static_cast<int>(m_state)]);
             waiting = false;
-
-            std_msgs::msg::Bool parking_finished;
-            parking_finished.data = true;
-            publisher_parking_finished_->publish(parking_finished);
         }
         break;
 

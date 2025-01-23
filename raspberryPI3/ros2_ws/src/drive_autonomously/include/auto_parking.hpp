@@ -24,12 +24,6 @@ public:
 
 private:
 
-    enum class ParkingType
-    {
-        STRAIGHT,
-        PARALLEL
-    };
-
 
     // Énumération pour représenter les états de l'algorithme de parking automatique
     enum class ParkingState
@@ -98,7 +92,7 @@ private:
 
     rclcpp::Clock clock_ = rclcpp::Clock(RCL_SYSTEM_TIME);
 
-    bool m_publishing, start_straight, start_parallel, waiting;
+    bool m_publishing, start, waiting;
     void init_parking(const std_msgs::msg::Int32 & i);
     void update_state(const interfaces::msg::MotorsFeedback::SharedPtr msg);
     void timer_callback();
