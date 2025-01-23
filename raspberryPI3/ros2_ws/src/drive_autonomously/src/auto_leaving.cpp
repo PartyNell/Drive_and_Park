@@ -17,8 +17,7 @@ AutoLeaving::AutoLeaving()
     : Node("auto_leaving")
 {
     m_publishing = false;
-    start_straight = false;
-    start_parallel = false;
+    start = false;
     waiting = false;
     m_current_distance = 0.0;
 
@@ -46,10 +45,12 @@ void AutoLeaving::init_leaving(const std_msgs::msg::Int32 & i)
 
     if(i.data == static_cast<int32_t>(ParkingType::PERPENDICULAR)){ // STRAIGHT PARKING
         RCLCPP_INFO(this->get_logger(), "START Straight Leaving");
-        start_straight = true;
+        start = true;
+        m_parking_type = ParkingType::PERPENDICULAR
     } else if (i.data == static_cast<int32_t>(ParkingType::PARALLEL)) {
         RCLCPP_INFO(this->get_logger(), "START Parallel Leaving");
-        start_parallel = true;
+        start = true;
+        m_parking_type = ParkingType::PARALLEL
     } else {
         RCLCPP_INFO(this->get_logger(), "STOP Parking");
         m_state = LeavingState::IDLE;
@@ -72,7 +73,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {    
             switch (m_parking_type)
             {
-            case ParkingType::STRAIGHT:
+            case ParkingType::PERPENDICULAR:
                 m_state = LeavingState::STRAIGHTEN_WHEELS;
                 break;
                 RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS, Distance: %f", LeavingDistances[static_cast<int>(m_state)]);            
@@ -264,10 +265,6 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             RCLCPP_INFO(this->get_logger(), "NEW STATE ===> LEFT_PARKING_SPACE");
             m_state = LeavingState::LEFT_PARKING_SPACE;
             waiting = false;
-
-            std_msgs::msg::Bool leaving_finished;
-            leaving_finished.data = true; 
-            publisher_leaving_finished_->publish(leaving_finished);
         }
         break;
 

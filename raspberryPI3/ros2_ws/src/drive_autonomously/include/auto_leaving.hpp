@@ -31,12 +31,6 @@ public:
     AutoLeaving();
 
 private:
-
-    enum class ParkingType
-    {
-        STRAIGHT,
-        PARALLEL
-    };
     
     // Énumération pour représenter les états de l'algorithme de Leaving automatique
     enum class LeavingState
@@ -91,7 +85,7 @@ private:
     rclcpp::TimerBase::SharedPtr timer_;
     interfaces::msg::JoystickOrder car_order;
 
-    bool m_publishing, start_straight, start_parallel, waiting;
+    bool m_publishing, start, waiting;
     float m_current_distance, m_current_distance_limit;
 
     void init_leaving(const std_msgs::msg::Int32 & i);
