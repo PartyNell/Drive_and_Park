@@ -45,7 +45,7 @@ private:
 
             if(steer_order > 1.0) steer_order=1.0;
             else if(steer_order < -1.0) steer_order=-1.0;
-            else if (abs(angle_to_perform) < 0.3) steer_order=0.0;
+            else if (abs(angle_to_perform) < 0.05) steer_order=0.0;
             else if(steer_order > 0.0 && steer_order < 0.20) steer_order=0.2;
             else if(steer_order < 0.0 && steer_order > -0.20) steer_order=-0.2;
 
@@ -64,7 +64,7 @@ private:
 
             init_time = current_time - reference_time;
 
-            if(abs(angle_to_perform) < 0.08){
+            if(abs(angle_to_perform) < 0.05){
                 ++validation_counter;
                 if(validation_counter == 5) {
                     std_msgs::msg::Bool finished;

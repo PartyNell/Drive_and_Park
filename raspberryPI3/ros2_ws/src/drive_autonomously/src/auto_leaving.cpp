@@ -46,15 +46,16 @@ void AutoLeaving::init_leaving(const std_msgs::msg::Int32 & i)
     if(i.data == static_cast<int32_t>(ParkingType::PERPENDICULAR)){ // STRAIGHT PARKING
         RCLCPP_INFO(this->get_logger(), "START Straight Leaving");
         start = true;
-        m_parking_type = ParkingType::PERPENDICULAR
+        m_parking_type = ParkingType::PERPENDICULAR;
     } else if (i.data == static_cast<int32_t>(ParkingType::PARALLEL)) {
         RCLCPP_INFO(this->get_logger(), "START Parallel Leaving");
         start = true;
-        m_parking_type = ParkingType::PARALLEL
+        m_parking_type = ParkingType::PARALLEL;
     } else {
         RCLCPP_INFO(this->get_logger(), "STOP Parking");
         m_state = LeavingState::IDLE;
         m_current_distance = 0.0;
+        start = false;
         waiting = false;
     }
 }
@@ -69,7 +70,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
     switch (m_state)
     {
     case LeavingState::IDLE:
-        if (start_straight)
+        if (start)
         {    
             switch (m_parking_type)
             {
@@ -79,9 +80,9 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
                 RCLCPP_INFO(this->get_logger(), "NEW STATE ===> STRAIGHTEN_WHEELS, Distance: %f", LeavingDistances[static_cast<int>(m_state)]);            
             
             case ParkingType::PARALLEL:
-                m_state = LeavingState::REVERSE_30_STEER_RIGHT;
+                m_state = LeavingState::REVERSE_20;
                 break;
-                RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_30_STEER_RIGHT, Distance: %f", LeavingDistances[static_cast<int>(m_state)]);     
+                RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_20, Distance: %f", LeavingDistances[static_cast<int>(m_state)]);     
             
             default:
                 break;
@@ -202,11 +203,56 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
             m_state = LeavingState::IDLE;
 
             m_publishing = false;
-            start_straight = false;
+            start = false;
         }
         break;
 
     // PARALLEL
+    
+    case LeavingState::REVERSE_20:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(REVERSE, STEER_NEUTRAL, SPEED_NORMAL);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_20_STEER_LEFT");
+            m_state = LeavingState::FORWARD_20_STEER_LEFT;
+            waiting = false;
+        }
+        break;
+        
+    case LeavingState::FORWARD_20_STEER_LEFT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(FORWARD, STEER_LEFT, SPEED_NORMAL);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> CHANGE_WHEELS_RIGHT");
+            m_state = LeavingState::CHANGE_WHEELS_RIGHT;
+            waiting = false;
+        }
+        break;
+
+    case LeavingState::CHANGE_WHEELS_RIGHT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(FORWARD, STEER_RIGHT, SPEED_NORMAL);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> REVERSE_30_STEER_RIGHT");
+            m_state = LeavingState::REVERSE_30_STEER_RIGHT;
+            waiting = false;
+        }
+        break;
 
     case LeavingState::REVERSE_30_STEER_RIGHT:
         if (!waiting)
@@ -223,7 +269,7 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         break;
 
-        case LeavingState::TURN_RIGHT_2_LEFT:
+    case LeavingState::TURN_RIGHT_2_LEFT:
         if (!waiting)
         {
             waiting = true;

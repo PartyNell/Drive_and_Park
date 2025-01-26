@@ -44,6 +44,7 @@ void AutoParking::init_parking(const std_msgs::msg::Int32 & i)
         RCLCPP_INFO(this->get_logger(), "STOP Parking");
         m_state = ParkingState::IDLE;
         m_current_distance = 0.0;
+        start=false;
         waiting = false;
     }
 }
@@ -379,7 +380,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(true); // Avancer
+            car_move(true, -0.6); // Avancer
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {
