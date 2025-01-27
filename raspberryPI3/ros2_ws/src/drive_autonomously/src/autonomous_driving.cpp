@@ -15,6 +15,13 @@
 #define WHEEL_DIAMETER 20.0
 #define MAX_DISTANCE 500 //in centimeters
 
+
+#define MANUAL = 0,
+#define SEARCH_IN_PROGRESS = 1,
+#define PARKING_IN_PROGRESS = 2,
+#define PARKED = 3,
+#define LEAVING_IN_PROGRESS = 4
+
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
@@ -39,7 +46,6 @@ class AutonomousDriving : public rclcpp::Node
       subscription_motors_feedback_ = this->create_subscription<interfaces::msg::MotorsFeedback>("motors_feedback", 10, std::bind(&AutonomousDriving::computeDistance, this, _1));
 
       //STATES subscribers
-      //subscriber_init_ok_ = this->create_subscription<std_msgs::msg::Bool>("init_finished", 10, std::bind(&AutonomousDriving::init_LiDar, this, _1));
       subscriber_start_detection = this->create_subscription<std_msgs::msg::Bool>("/search_finish_initialization", 10, std::bind(&AutonomousDriving::init_search_state, this, _1));
       subscriber_detect_parking = this->create_subscription<std_msgs::msg::Int32>("/info_parking_place", 10, std::bind(&AutonomousDriving::detect_parking, this, _1));
       subscriber_parking_ok_ = this->create_subscription<std_msgs::msg::Bool>("parking_finished", 10, std::bind(&AutonomousDriving::wait_order, this, _1));
@@ -61,9 +67,6 @@ class AutonomousDriving : public rclcpp::Node
         if(mode == 1){
           if(manual){
             //START initialization
-            // std_msgs::msg::Bool init_autonomous;
-            // init_autonomous.data = true;
-            // publisher_init_state_->publish(init_autonomous);
 
             RCLCPP_INFO(this->get_logger(), "START LiDar Initialization");
 
@@ -74,9 +77,8 @@ class AutonomousDriving : public rclcpp::Node
             init_LiDar.data = true; 
             publisher_search_parking->publish(init_LiDar);
 
-            search_in_progress = true;
+            set_state(SEARCH_IN_PROGRESS);
 
-            //init_in_progress = true;
           } else if (parked) {
             //START leave parking protocole
             std_msgs::msg::Int32 init_leaving;
@@ -85,86 +87,40 @@ class AutonomousDriving : public rclcpp::Node
 
             set_parking_security_mode(true);
 
-            leaving_in_progress = true;
+            set_state(LEAVING_IN_PROGRESS);
           }
-          
-          //search_in_progress = false;
-          parking_in_progress = false;
-          manual = false;
-          parked = false;
 
         } else if (mode != 1){
-          if(init_in_progress){
-            //STOP initialization
-            std_msgs::msg::Bool init_autonomous;
-            init_autonomous.data = false; 
-            publisher_init_state_->publish(init_autonomous);
-
-            manual = true;
-          }
-          else if(search_in_progress){
+          if(search_in_progress){
             //STOP searching empty parking space
             std_msgs::msg::Bool search_parking;
             search_parking.data = false; 
             publisher_search_parking->publish(search_parking);
 
-            manual = true;
+            set_state(MANUAL);
           } 
           else if(parking_in_progress){
             //STOP the parking state machine
             std_msgs::msg::Int32 parking;
             parking.data = -1; 
             publisher_parking_state_->publish(parking);
+
+            set_state(MANUAL);
           }
           else if(leaving_in_progress){
             //STOP the leaving state machine
             std_msgs::msg::Int32 init_leaving;
             init_leaving.data = -1;
             publisher_leaving_state_->publish(init_leaving);
+
+            set_state(MANUAL);
           }
           else if (parked) {
-            manual = false;
+            set_state(PARKED);
           }
-
-          set_parking_security_mode(false);
-
-          init_in_progress = false;
-          search_in_progress = false;
-          parking_in_progress = false;
-          leaving_in_progress = false;
         }
       }
     }
-
-    // void init_LiDar(const std_msgs::msg::Bool & init){
-    //   /*
-    //     If the execution of the initilization succeed then the car switch to the search state. 
-    //     The car is stopped until the LiDar get Initialized
-    //   */
-    //     init_in_progress = false;
-
-    //     if(init.data){
-    //       RCLCPP_INFO(this->get_logger(), "Initialisation DONE");
-
-    //       set_car_order(true, 1, 0.0, 0.0, false);
-
-    //       //stop the car for LiDar initialization
-    //       std_msgs::msg::Bool init_LiDar;
-    //       init_LiDar.data = true; 
-    //       publisher_search_parking->publish(init_LiDar);
-
-    //       search_in_progress = true;
-
-    //     } else {
-    //       RCLCPP_INFO(this->get_logger(), "Initialisation FAILED");
-
-    //       //STOP the car and switch to manual mode
-    //       set_car_order(true, 0, 0.0, 0.0, false);
-
-    //       search_in_progress = false;
-    //       manual = true;
-    //     }
-    // }
 
     void init_search_state(const std_msgs::msg::Bool & init){
       /*
@@ -179,6 +135,7 @@ class AutonomousDriving : public rclcpp::Node
           set_car_order(true, 1, 0.5, 0.0, false);
           distance_travelled = 0.0;
 
+          set_state(SEARCH_IN_PROGRESS);
         } else {
           RCLCPP_INFO(this->get_logger(), "LiDar Initialisation FAILED");
 
@@ -186,6 +143,7 @@ class AutonomousDriving : public rclcpp::Node
           set_car_order(true, 0, 0.0, 0.0, false);
 
           search_in_progress = false;
+          set_state(MANUAL);
         }
     }
 
@@ -205,7 +163,7 @@ class AutonomousDriving : public rclcpp::Node
             // The speed sent to the control of the car is 0
             set_car_order(true, 0, 0.0, 0.0, false);
             RCLCPP_INFO(this->get_logger(), "The car has driven %.2f centimeters.", distance_travelled);
-            manual = true;
+            set_state(MANUAL);
           }
         }
       }
@@ -228,39 +186,29 @@ class AutonomousDriving : public rclcpp::Node
       rclcpp::sleep_for(std::chrono::seconds(5));
 
       //START parking operation
-      search_in_progress = false;
-      parking_in_progress = true;
+      set_state(PARKING_IN_PROGRESS);
 
       std_msgs::msg::Int32 parking;
       parking.data = parking_type; 
       publisher_parking_state_->publish(parking);
-
-      set_parking_security_mode(true);
-      
     }
 
-    void wait_order(const std_msgs::msg::Bool & park){
+    void wait_order(){
       /*
         Once the car parked it switch to manual mode and stop the car
       */
-      parking_in_progress = false;
-      parked = true;
+      set_state(PARKED);
       set_car_order(true, 0, 0.0, 0.0, false);
-
-      set_parking_security_mode(false);
     }
 
-    void finish_(const std_msgs::msg::Bool & leaved){
+    void finish_(){
       /*
         Once the car leaved the parking space the car stop and switch to manual mode
       */
       //STOP the car
       set_car_order(true, 0, 0.0, 0.0, false);
 
-      set_parking_security_mode(false);
-
-      leaving_in_progress = false;
-      manual = true;
+      set_state(MANUAL);
     }
 
     //TOOLS
@@ -280,6 +228,39 @@ class AutonomousDriving : public rclcpp::Node
       publisher_park_leave_->publish(security_mode);
     }
 
+    void set_state(int state){
+      search_in_progress = false;
+      parking_in_progress = false;
+      parked = false;
+      leaving_in_progress = false;
+      manual = false;
+
+      switch(state){
+        case 0:
+          manual = true;
+          set_parking_security_mode(false);
+        break;
+        case 1:
+          search_in_progress = true;
+          set_parking_security_mode(false);
+        break;
+        case 2:
+          parking_in_progress = true;
+          set_parking_security_mode(true);
+        break;
+        case 3:
+          parked = true;
+          set_parking_security_mode(false);
+        break;
+        case 4:
+          leaving_in_progress = true;
+          set_parking_security_mode(true);
+        break;
+
+      }
+    }
+
+
 
     //Publishers
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;
@@ -291,7 +272,6 @@ class AutonomousDriving : public rclcpp::Node
 
     rclcpp::Subscription<interfaces::msg::JoystickOrder>::SharedPtr subscriber_autonomous_mode_;
     rclcpp::Subscription<interfaces::msg::MotorsFeedback>::SharedPtr subscription_motors_feedback_;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_init_ok_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_start_detection;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriber_detect_parking;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscriber_parking_ok_;
@@ -300,7 +280,6 @@ class AutonomousDriving : public rclcpp::Node
     //Attributes
     size_t count_;
     int mode = 0;
-    bool init_in_progress = false;
     bool search_in_progress = false;
     bool parking_in_progress = false;
     bool parked = false;

@@ -53,7 +53,7 @@ private:
     void carCommand_AutonomousOrder(const interfaces::msg::JoystickOrder & autonomousOrder)
     {
         //Publish autonomous order if the mode is 1
-        if(order_saved.mode == 1)
+        if(order_saved.mode == 0 || order_saved.mode == 1)
         {
             publishOrder(autonomousOrder.throttle, autonomousOrder.steer, autonomousOrder.reverse);
         }
