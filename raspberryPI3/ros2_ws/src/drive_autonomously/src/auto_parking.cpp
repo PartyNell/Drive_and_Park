@@ -380,7 +380,7 @@ void AutoParking::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         {
             waiting = true;
             m_current_distance = 0.0;
-            car_move(true, -0.6); // Avancer
+            car_move(true, -0.5); // Avancer
         }
         else if (waiting && m_current_distance >= m_current_distance_limit)
         {

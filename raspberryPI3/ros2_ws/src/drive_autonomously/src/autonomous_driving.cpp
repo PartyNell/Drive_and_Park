@@ -16,11 +16,11 @@
 #define MAX_DISTANCE 500 //in centimeters
 
 
-#define MANUAL = 0,
-#define SEARCH_IN_PROGRESS = 1,
-#define PARKING_IN_PROGRESS = 2,
-#define PARKED = 3,
-#define LEAVING_IN_PROGRESS = 4
+#define MANUAL 0
+#define SEARCH_IN_PROGRESS 1
+#define PARKING_IN_PROGRESS 2
+#define PARKED 3
+#define LEAVING_IN_PROGRESS 4
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -28,6 +28,7 @@ using std::placeholders::_1;
 class AutonomousDriving : public rclcpp::Node
 {
   public:
+
     AutonomousDriving()
     : Node("autonomous_driving"), count_(0)
     {
@@ -42,7 +43,7 @@ class AutonomousDriving : public rclcpp::Node
       publisher_leaving_state_ = this->create_publisher<std_msgs::msg::Int32>("start_leaving", 10);
 
       //SUBSCRIBERS
-      subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::init_autonomous_mode, this, _1));
+      subscriber_autonomous_mode_ = this->create_subscription<interfaces::msg::JoystickOrder>("joystick_order", 10, std::bind(&AutonomousDriving::init_autonomous_mode, this, std::placeholders::_1));
       subscription_motors_feedback_ = this->create_subscription<interfaces::msg::MotorsFeedback>("motors_feedback", 10, std::bind(&AutonomousDriving::computeDistance, this, _1));
 
       //STATES subscribers
@@ -193,7 +194,7 @@ class AutonomousDriving : public rclcpp::Node
       publisher_parking_state_->publish(parking);
     }
 
-    void wait_order(){
+    void wait_order(const std_msgs::msg::Bool parked){
       /*
         Once the car parked it switch to manual mode and stop the car
       */
@@ -201,7 +202,7 @@ class AutonomousDriving : public rclcpp::Node
       set_car_order(true, 0, 0.0, 0.0, false);
     }
 
-    void finish_(){
+    void finish_(const std_msgs::msg::Bool leaved){
       /*
         Once the car leaved the parking space the car stop and switch to manual mode
       */

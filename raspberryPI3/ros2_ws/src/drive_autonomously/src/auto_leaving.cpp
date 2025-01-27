@@ -323,15 +323,73 @@ void AutoLeaving::update_state(const interfaces::msg::MotorsFeedback::SharedPtr 
         }
         else if(waiting && m_current_distance >= m_current_distance_limit)
         {    
-            RCLCPP_INFO(this->get_logger(), "CAR IS READY TO GO ! HAVE A NICE TRAVEL !");
+             RCLCPP_INFO(this->get_logger(), "NEW STATE ===> TURN_RIGHT_2_LEFT");
+            m_state = LeavingState::TURN_RIGHT_2_LEFT;
+            waiting = false;
+        }
+        break;
+
+    case LeavingState::TURN_RIGHT_2_LEFT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(FORWARD, STEER_LEFT, SPEED_SLOW);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> BACKWARD_LEFT_40");
+            m_state = LeavingState::BACKWARD_LEFT_40;
+            waiting = false;
+        }
+        break;
+
+    case LeavingState::BACKWARD_LEFT_40:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(REVERSE, STEER_LEFT, SPEED_NORMAL);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> TURN_LEFT_2_RIGHT");
+            m_state = LeavingState::TURN_LEFT_2_RIGHT;
+            waiting = false;
+        }
+        break;
+
+    case LeavingState::TURN_LEFT_2_RIGHT:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(FORWARD, STEER_RIGHT, SPEED_SLOW);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> FORWARD_RIGHT_60");
+            m_state = LeavingState::FORWARD_RIGHT_60;
+            waiting = false;
+        }
+        break;
+
+    case LeavingState::FORWARD_RIGHT_60:
+        if (!waiting)
+        {
+            waiting = true;
+            m_current_distance = 0.0;
+            car_move(FORWARD, STEER_RIGHT, SPEED_NORMAL);
+        }
+        else if(waiting && m_current_distance >= m_current_distance_limit)
+        {    
+            RCLCPP_INFO(this->get_logger(), "NEW STATE ===> LEFT_PARKING_SPACE");
+            m_state = LeavingState::LEFT_PARKING_SPACE;
+            waiting = false;
+
             std_msgs::msg::Bool leaving_finished;
             leaving_finished.data = true; 
             publisher_leaving_finished_->publish(leaving_finished);
-
-            m_state = LeavingState::IDLE;
-
-            m_publishing = false;
-            start = false;
         }
         break;
 
