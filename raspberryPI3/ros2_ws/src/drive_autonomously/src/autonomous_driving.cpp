@@ -13,7 +13,7 @@
 
 #define PULSE_FOR_A_REVOLUTION 36
 #define WHEEL_DIAMETER 20.0
-#define MAX_DISTANCE 500 //in centimeters
+#define MAX_DISTANCE 430 //in centimeters
 
 
 #define MANUAL 0

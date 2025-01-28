@@ -38,6 +38,8 @@ void ParkingSpace::init_search(const std_msgs::msg::Bool::SharedPtr msg){
 
 	if(search_in_progress){
 		RCLCPP_INFO(this->get_logger(), "Search in progress...");
+	} else {
+		scan.set_isInitialized(true);
 	}
 }
 
@@ -134,6 +136,7 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 				if(message.data != static_cast<int32_t>(ParkingType::NONE)){
 					type_place_info->publish(message);
 					search_in_progress = false;
+					scan.set_isInitialized(true);
 				}
 			}
 		}

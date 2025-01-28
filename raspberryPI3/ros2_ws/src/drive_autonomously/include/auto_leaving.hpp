@@ -90,7 +90,7 @@ private:
         10.0*DISTANCE2PULSE,   // TURN_RIGHT_2_LEFT
         50.0*DISTANCE2PULSE,   // BACKWARD_LEFT_40
         10.0*DISTANCE2PULSE,   // TURN_LEFT_2_RIGHT
-        135.0*DISTANCE2PULSE,   // FORWARD_RIGHT_60
+        145.0*DISTANCE2PULSE,   // FORWARD_RIGHT_60
     };
 
     rclcpp::Publisher<interfaces::msg::JoystickOrder>::SharedPtr publisher_car_order_;

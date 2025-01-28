@@ -39,6 +39,7 @@ void ObstacleDetection::selectSecurity(const std_msgs::msg::Bool::SharedPtr park
     /*
         When the car is parking or is leaving a parking space then the Park Security is activated.
     */
+    RCLCPP_INFO(this->get_logger(), "PARKMOD : %d", parking_leaving->data);
     set_parkmod(parking_leaving->data);
 }
 
@@ -254,7 +255,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
     {
         if (!is_margin_reach_front_)
         {
-            RCLCPP_WARN(this->get_logger(), "Lidar margin front reached!");
+            // RCLCPP_WARN(this->get_logger(), "Lidar margin front reached!");
         }
         is_margin_reach_front_ = true;
     }
@@ -268,7 +269,7 @@ void ObstacleDetection::laserScanCallback(const sensor_msgs::msg::LaserScan::Sha
     {
         if (!is_margin_reach_back_)
         {
-            RCLCPP_WARN(this->get_logger(), "Lidar margin back reached!");
+            // RCLCPP_WARN(this->get_logger(), "Lidar margin back reached!");
         }
         is_margin_reach_back_ = true;
     }
