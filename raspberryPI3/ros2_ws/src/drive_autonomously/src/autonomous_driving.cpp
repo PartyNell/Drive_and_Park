@@ -13,7 +13,7 @@
 
 #define PULSE_FOR_A_REVOLUTION 36
 #define WHEEL_DIAMETER 20.0
-#define MAX_DISTANCE 430 //in centimeters
+#define MAX_DISTANCE 350 //in centimeters
 
 
 #define MANUAL 0
@@ -141,7 +141,7 @@ class AutonomousDriving : public rclcpp::Node
           RCLCPP_INFO(this->get_logger(), "LiDar Initialisation FAILED");
 
           //STOP the car and switch to manual mode
-          set_car_order(true, 0, 0.0, 0.0, false);
+          set_car_order(true, 1, 0.0, 0.0, false);
 
           search_in_progress = false;
           set_state(MANUAL);
@@ -162,7 +162,7 @@ class AutonomousDriving : public rclcpp::Node
         {
           if(!manual){
             // The speed sent to the control of the car is 0
-            set_car_order(true, 0, 0.0, 0.0, false);
+            set_car_order(true, 1, 0.0, 0.0, false);
             RCLCPP_INFO(this->get_logger(), "The car has driven %.2f centimeters.", distance_travelled);
             set_state(MANUAL);
           }
@@ -199,7 +199,7 @@ class AutonomousDriving : public rclcpp::Node
         Once the car parked it switch to manual mode and stop the car
       */
       set_state(PARKED);
-      set_car_order(true, 0, 0.0, 0.0, false);
+      set_car_order(true, 1, 0.0, 0.0, false);
     }
 
     void finish_(const std_msgs::msg::Bool leaved){
@@ -207,7 +207,7 @@ class AutonomousDriving : public rclcpp::Node
         Once the car leaved the parking space the car stop and switch to manual mode
       */
       //STOP the car
-      set_car_order(true, 0, 0.0, 0.0, false);
+      set_car_order(true, 1, 0.0, 0.0, false);
 
       set_state(MANUAL);
     }

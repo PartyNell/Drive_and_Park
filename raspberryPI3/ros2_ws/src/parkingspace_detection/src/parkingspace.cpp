@@ -117,7 +117,7 @@ void ParkingSpace::detect_parking_space(const sensor_msgs::msg::LaserScan::Share
 
 				auto message = std_msgs::msg::Int32();
 
-				if (m_length >= PARKING_SPACE_LIMIT_STRAIGHT_LENGTH && m_length <= PARKING_SPACE_LIMIT_PARALLEL_LENGTH-25 && m_depth >= PARKING_SPACE_LIMIT_STRAIGHT_DEPTH) {
+				if (m_length >= PARKING_SPACE_LIMIT_STRAIGHT_LENGTH && m_length <= PARKING_SPACE_LIMIT_PARALLEL_LENGTH-10 && m_depth >= PARKING_SPACE_LIMIT_STRAIGHT_DEPTH) {
 					message.data = static_cast<int32_t>(ParkingType::PERPENDICULAR);
 					RCLCPP_INFO(this->get_logger(), "Perpendicular parking space detected");
 					RCLCPP_INFO(this->get_logger(), "Width: %.2f cm, Depth: %.2f cm", m_length, m_depth);
