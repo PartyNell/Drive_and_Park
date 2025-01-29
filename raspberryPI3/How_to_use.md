@@ -4,6 +4,8 @@ Parking a vehicle is a complex task that involves potential risks, such as endan
 When the user intends to park in a specific location, they can simply press a button, prompting the vehicle to locate an available parking space. The system identifies the type of parking space—whether straight, parallel or angled—and adapts its approach accordingly. During this process, the vehicle continuously monitors its surroundings in real-time to prevent accidents. If an obstacle is detected, the system will automatically stop the vehicle. Once parked, the system notifies the user and shuts off the engine. Additionally, by pressing another button, the user can command the vehicle to exit the parking space safely, ensuring proper alignment with other parked vehicles. \
 In summary, the self-park system offers a comprehensive, autonomous parking solution designed to enhance both safety and convenience. By utilising advanced sensors, state machines, and decision tree algorithms, the system ensures precise parking in various scenarios while minimising risks. With real-time monitoring and obstacle detection, it provides a seamless parking experience, making driving safer and more efficient.
 
+![image](https://github.com/user-attachments/assets/c4e13992-61f3-432e-8499-8389f5311ebb)
+
 ## Launch the system
 
 ### 1. Start the car
@@ -59,7 +61,7 @@ The distances are evaluated with the *ultrasonic sensors*.
 
 ### Parking and leaving mode
 **20 cm margins** all around the car. 
-The distances are evaluated with the *LiDar.
+The distances are evaluated with the *LiDar*.
 
 *The parking space research is done with the LiDar and the odometer.*
 
